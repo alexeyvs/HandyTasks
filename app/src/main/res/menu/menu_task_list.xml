@@ -1,0 +1,63 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.handytasks.handytasks.activities.TaskList">
+
+    <item
+        android:id="@+id/search"
+        android:actionViewClass="android.widget.SearchView"
+        android:icon="@android:drawable/ic_menu_search"
+        android:showAsAction="ifRoom|collapseActionView"
+        android:title="Search" />
+
+    <item
+        android:id="@+id/action_create_task"
+        android:icon="@android:drawable/ic_menu_add"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom|collapseActionView"
+        android:title="@string/action_create_task" />
+    <item
+        android:id="@+id/action_sync_now"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_sync_now" />
+    <item
+        android:id="@+id/action_view_archive"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_view_archive" />
+    <item
+        android:id="@+id/action_select_cloud_provider"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_select_cloud_provider" />
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_settings" />
+    <item
+        android:id="@+id/action_about"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_about" />
+    <item android:title="Sort">
+        <menu>
+            <item
+                android:id="@+id/action_sort_az"
+                android:title="Text A-Z" />
+            <item
+                android:id="@+id/action_sort_za"
+                android:title="Text Z-A" />
+            <item
+                android:id="@+id/action_sort_incomplete_az"
+                android:title="Unfinished, Text A-Z" />
+            <item
+                android:id="@+id/action_sort_incomplete_za"
+                android:title="Unfinished, Text Z-A" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/action_test"
+        android:title="Test" />
+
+</menu>
