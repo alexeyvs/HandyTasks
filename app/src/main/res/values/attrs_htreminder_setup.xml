@@ -1,5 +1,5 @@
 <resources>
-    <declare-styleable name="empty_view">
+    <declare-styleable name="HTReminderSetup">
 
     </declare-styleable>
 </resources>

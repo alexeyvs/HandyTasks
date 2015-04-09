@@ -18,13 +18,23 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toLeftOf="@+id/drag_handle"
-        android:layout_toRightOf="@+id/isCompleted"
+        android:layout_toRightOf="@+id/reminder_set"
         android:width="@dimen/activity_horizontal_margin"
         android:elegantTextHeight="true"
         android:focusable="false"
         android:maxLines="2"
         android:paddingLeft="15sp"
         android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ImageView
+        android:id="@+id/reminder_set"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/isCompleted"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/isCompleted"
+        android:src="@drawable/ic_reminder"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/drag_handle"
@@ -35,5 +45,6 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:src="@drawable/ic_drag_handle" />
+
 
 </RelativeLayout>

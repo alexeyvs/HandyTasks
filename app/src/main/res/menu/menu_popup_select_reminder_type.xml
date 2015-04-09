@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/group_select_reminder_type_popupmenu">
+        <item
+            android:id="@+id/reminder_type_timed"
+            android:orderInCategory="100"
+            android:showAsAction="never"
+            android:title="On time" />
+        <item
+            android:id="@+id/reminder_type_location"
+            android:orderInCategory="100"
+            android:showAsAction="never"
+            android:title="On location" />
+    </group>
+</menu>

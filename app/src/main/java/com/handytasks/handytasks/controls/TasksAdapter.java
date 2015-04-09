@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.handytasks.handytasks.R;
@@ -125,6 +126,12 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
             currentItemCompleted.setChecked(false);
         }
 
+        ImageView reminderIcon = (ImageView) convertView.findViewById(R.id.reminder_set);
+        if (null != task.getReminder()) {
+            reminderIcon.setVisibility(View.VISIBLE);
+        } else {
+            reminderIcon.setVisibility(View.GONE);
+        }
 
         currentItemCompleted.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,6 +155,7 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
                 }
 
                 task.notifyAdapterDataSetChanged();
+                assert (task.getParent() != null);
                 task.getParent().Write();
             }
         });

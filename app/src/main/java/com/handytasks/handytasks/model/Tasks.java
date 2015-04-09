@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,8 +29,9 @@ public class Tasks implements IFSChangeHandler {
     private final ICloudFS mCloudFS;
     private final TaskTypes.TaskListTypes mType;
     private final ArrayList<Task> mTasksArray = new ArrayList<>();
+    ScheduledFuture<?> mLastScheduledStartWatchForChanges;
     private ICloudFile mCloudFile;
-    private ITaskListChanged mTaskListChangedHandler;
+    private ArrayList<ITaskListChanged> mTaskListChangedHandlers;
     private Lock mLock = new ReentrantLock(true);
     private Boolean mGoingToWrite = false;
     private Runnable mWriteFileTask = new Runnable() {
@@ -61,7 +63,6 @@ public class Tasks implements IFSChangeHandler {
         }
     };
     private ScheduledExecutorService mScheduledPool = Executors.newScheduledThreadPool(1);
-    private boolean mUpdateRequested = false;
 
     public Tasks(TaskTypes.TaskListTypes type, ICloudFS fs, final String filename, final ICreateTasksResult callback) {
         mType = type;
@@ -94,8 +95,13 @@ public class Tasks implements IFSChangeHandler {
 
     }
 
-    public void setChangedEventHandler(ITaskListChanged listChangedEvent) {
-        mTaskListChangedHandler = listChangedEvent;
+    public void addChangedEventHandler(ITaskListChanged listChangedEvent) {
+        if (null == mTaskListChangedHandlers) {
+            mTaskListChangedHandlers = new ArrayList<>();
+        }
+        synchronized (mTaskListChangedHandlers) {
+            mTaskListChangedHandlers.add(listChangedEvent);
+        }
     }
 
     public void readIfEmpty(final IAsyncResult callback) {
@@ -127,9 +133,14 @@ public class Tasks implements IFSChangeHandler {
                 }
                 mLock.unlock();
 
-                if (null != mTaskListChangedHandler) {
-                    mTaskListChangedHandler.TaskListChanged();
+                if (null != mTaskListChangedHandlers) {
+                    synchronized (mTaskListChangedHandlers) {
+                        for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
+                            mTaskListChangedHandler.TaskListChanged();
+                        }
+                    }
                 }
+
                 callback.OnSuccess(null);
                 Log.d(TAG, "Read completed");
             }
@@ -148,21 +159,33 @@ public class Tasks implements IFSChangeHandler {
 
     public synchronized void Write() {
         mLock.lock();
+        stopWatchForChanges();
         StringBuilder data = new StringBuilder(mTasksArray.size() * 20);
 
-        synchronized (mTasksArray) {
+        synchronized (this) {
             for (int i = 0; i < mTasksArray.size(); i++) {
                 data.append(mTasksArray.get(i).getTaskText());
                 data.append("\n");
             }
-            mGoingToWrite = false;
         }
+        if (null != mLastScheduledStartWatchForChanges) {
+            mLastScheduledStartWatchForChanges.cancel(false);
+        }
+        mLastScheduledStartWatchForChanges = mScheduledPool.schedule(new Runnable() {
+            @Override
+            public void run() {
+                startWatchForChanges();
+            }
+        }, 20, TimeUnit.SECONDS);
+
 
         mCloudFS.WriteTextFile(mCloudFile, data.toString(), new IAsyncResult() {
             @Override
             public void OnSuccess(String result) {
                 mLock.unlock();
                 Log.d(TAG, "Write completed");
+                // delay start startWatchForChanges
+
 
             }
 
@@ -225,7 +248,7 @@ public class Tasks implements IFSChangeHandler {
     }
 
     public void Add(Task taskItem) {
-        synchronized (mTasksArray) {
+        synchronized (this) {
             taskItem.setParent(this);
             taskItem.setLineNumber(mTasksArray.size());
             mTasksArray.add(taskItem);
@@ -235,19 +258,21 @@ public class Tasks implements IFSChangeHandler {
     }
 
     public void setTask(Task task) {
-        synchronized (mTasksArray) {
+        synchronized (this) {
             for (int i = 0; i < mTasksArray.size(); i++) {
                 if (mTasksArray.get(i).getLineNumber() == task.getLineNumber()) {
                     if (task.getTaskText().equals(mTasksArray.get(i).getTaskText())) {
                         // nothing important changed
                         return;
                     }
+                    task.setParent(this);
                     mTasksArray.set(i, task);
                     break;
                 }
             }
+
+            taskListChanged();
         }
-        taskListChanged();
     }
 
     public ICloudAPI getAPI() {
@@ -255,7 +280,7 @@ public class Tasks implements IFSChangeHandler {
     }
 
     public void deleteTask(Task task) {
-        synchronized (mTasksArray) {
+        synchronized (this) {
             for (int i = 0; i < mTasksArray.size(); i++) {
                 if (mTasksArray.get(i).getLineNumber() == task.getLineNumber()) {
                     mTasksArray.remove(i);
@@ -270,10 +295,13 @@ public class Tasks implements IFSChangeHandler {
     }
 
     public void taskListChanged() {
-        if (null != mTaskListChangedHandler) {
-            mTaskListChangedHandler.TaskListChanged();
+        if (null != mTaskListChangedHandlers) {
+            synchronized (mTaskListChangedHandlers) {
+                for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
+                    mTaskListChangedHandler.TaskListChanged();
+                }
+            }
         }
-
         Write();
     }
 
@@ -332,8 +360,8 @@ public class Tasks implements IFSChangeHandler {
         taskListChanged();
     }
 
-    public void requestUpdateFromService() {
-        mUpdateRequested = true;
+    public boolean contains(final Task key) {
+        return mTasksArray.contains(key);
     }
 
     public enum SortTypes {

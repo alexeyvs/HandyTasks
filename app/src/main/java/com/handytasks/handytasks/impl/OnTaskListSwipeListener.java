@@ -7,6 +7,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.activities.TaskList;
 import com.handytasks.handytasks.activities.TaskView;
 import com.handytasks.handytasks.interfaces.IAsyncResult;
@@ -96,6 +97,7 @@ public class OnTaskListSwipeListener implements View.OnTouchListener {
             intent.putExtra("requestCode", TaskView.REQUEST_CODE_EDIT_MODE);
             intent.putExtra("DATA", mTask);
             mActivity.startActivityForResult(intent, TaskView.REQUEST_CODE_EDIT_MODE);
+            mActivity.overridePendingTransition(R.anim.in, R.anim.out);
             return true;
         }
 

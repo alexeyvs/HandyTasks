@@ -17,7 +17,8 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:inputType="text" />
+        android:autoText="false"
+        android:inputType="textMultiLine" />
 
     <CheckBox
         android:id="@+id/taskCompleted"
@@ -29,13 +30,119 @@
         android:onClick="onTaskCompleted"
         android:text="@string/task_completed_caption" />
 
-    <Button
-        android:id="@+id/set_reminder"
+
+    <LinearLayout
+        android:id="@+id/reminder_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
         android:layout_below="@+id/taskCompleted"
-        android:text="Set reminder" />
+        android:orientation="horizontal"
+        android:visibility="visible">
+
+        <ImageButton
+            android:id="@+id/toggle_reminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onToggleReminder"
+            android:src="@drawable/ic_reminder" />
+
+        <LinearLayout
+            android:id="@+id/reminder_params_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/reminder_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingRight="10dp">
+
+                <TextView
+                    android:id="@+id/reminder_type_select"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:editable="false"
+                    android:enabled="true"
+                    android:inputType="text"
+                    android:onClick="onSelectReminderType"
+                    android:text="Timed"
+                    android:textSize="10pt" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/dotted" />
+
+            <LinearLayout
+                android:id="@+id/timed_params"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="5dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/reminder_timed_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:enabled="true"
+                    android:inputType="textMultiLine"
+                    android:onClick="onSelectDateClick"
+                    android:paddingRight="10pt"
+                    android:text="Today"
+                    android:textSize="10pt" />
+
+                <TextView
+                    android:id="@+id/reminder_timed_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:enabled="true"
+                    android:inputType="textMultiLine"
+                    android:onClick="onSelectTimeClick"
+                    android:text="Morning"
+                    android:textSize="10pt" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/location_params"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/reminder_select_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:enabled="true"
+                    android:inputType="textMultiLine"
+                    android:onClick="onPickLocation"
+                    android:text="Pick location"
+                    android:textSize="10pt" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+    <!--
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reminder"
+            android:id="@+id/switch1"
+            android:layout_below="@+id/toggle_reminder"
+            />
+    -->
 
 </RelativeLayout>

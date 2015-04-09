@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import com.handytasks.handytasks.controls.TasksAdapter;
 
+import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,14 +26,14 @@ public class Task implements Parcelable {
     };
     private static final String TAG = "Task";
     private Tasks m_Parent;
-    private String mTaskText;
+    private String mTaskText = "";
     private int m_LineNumber;
     private TasksAdapter m_Adapter;
     private TaskTypes.TaskListTypes mType;
     private TaskReminder mReminder;
 
     private Task(Parcel in) {
-        setTaskText(in.readString());
+        mTaskText = in.readString();
         setLineNumber(in.readInt());
         setType(TaskTypes.TaskListTypes.valueOf(in.readString()));
         /*
@@ -58,7 +59,7 @@ public class Task implements Parcelable {
     }
 
     public Task(Task task) {
-        setTaskText(task.getTaskText());
+        mTaskText = task.mTaskText;
         setLineNumber(task.getLineNumber());
         setType(task.getType());
         setParent(task.getParent());
@@ -67,7 +68,7 @@ public class Task implements Parcelable {
     }
 
     public Task(String s, int lineNumber, Tasks parent) {
-        setTaskText(s);
+        mTaskText = s;
         setLineNumber(lineNumber);
         m_Parent = parent;
         setType(m_Parent.getType());
@@ -109,7 +110,12 @@ public class Task implements Parcelable {
     }
 
     public void setTaskText(String taskText) {
+        TaskReminder reminder = getReminder();
+        boolean isCompleted = isCompleted();
+
         mTaskText = taskText.replace("\r", "");
+        setReminder(reminder);
+        setCompleted(isCompleted);
     }
 
     @Override
@@ -122,23 +128,6 @@ public class Task implements Parcelable {
         dest.writeString(mTaskText);
         dest.writeInt(getLineNumber());
         dest.writeString(getType().toString());
-        /*
-        if ( null == mReminder ){
-            dest.writeByte((byte)0);
-        } else {
-            dest.writeByte((byte)1);
-            switch (mReminder.getType()){
-                case Timed:
-                    dest.writeString(TaskReminder.ReminderType.Timed.toString());
-                    dest.writeString(mReminder.getParams().getTriggerDateString());
-                    break;
-                case Location:
-                    dest.writeString(TaskReminder.ReminderType.Location.toString());
-                    break;
-            }
-
-        }
-        */
     }
 
     public void setAdapter(TasksAdapter adapter) {
@@ -180,46 +169,36 @@ public class Task implements Parcelable {
                     mReminder = null;
                     return null;
                 } else {
-                    mReminder = new TaskReminder(TaskReminder.ReminderType.Timed, new ReminderParams(reminderMatcher.group(1)));
+                    try {
+                        mReminder = new TaskReminder(reminderMatcher.group(1));
+                    } catch (ParseException e) {
+                        return null;
+                    }
                     return mReminder;
                 }
             } else {
                 return null;
             }
-
-
         } else {
             return null;
         }
-
     }
 
     public void setReminder(final TaskReminder reminder) {
+        mReminder = reminder;
         // find reminder:[...] pattern
         if (mTaskText.matches(".*remind:\\[(.*)\\]")) {
             // already set, update
             if (null == reminder) {
-                setTaskText(getTaskText().replaceAll("remind:\\[(.*)\\]", ""));
-                return;
+                mTaskText = getTaskText().replaceAll("remind:\\[(.*)\\]", "");
             } else {
-                mTaskText = mTaskText.replaceFirst("remind:\\[(.*)\\]", formatReminder(reminder));
+                mTaskText = mTaskText.replaceFirst("remind:\\[(.*)\\]", mReminder.toString());
             }
-
         } else {
-            mTaskText += " " + formatReminder(reminder);
+            if (mReminder != null) {
+                mTaskText = mTaskText.trim() + " " + mReminder.toString();
+            }
         }
-
-        mReminder = reminder;
-
     }
 
-    private String formatReminder(final TaskReminder reminder) {
-        switch (reminder.getType()) {
-            case Timed:
-                return String.format("remind:[%s]", reminder.getParams().getTriggerDateString());
-            case Location:
-                return "";
-        }
-        return "";
-    }
 }

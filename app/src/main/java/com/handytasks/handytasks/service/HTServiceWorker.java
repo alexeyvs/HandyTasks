@@ -4,19 +4,28 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.media.Ringtone;
 import android.net.Uri;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.activities.MainActivity;
 import com.handytasks.handytasks.impl.HTApplication;
 import com.handytasks.handytasks.interfaces.ICloudAPI;
 import com.handytasks.handytasks.interfaces.ICreateTasksResult;
 import com.handytasks.handytasks.interfaces.IInitAPI;
+import com.handytasks.handytasks.interfaces.ITaskListChanged;
+import com.handytasks.handytasks.model.ReminderLocationData;
 import com.handytasks.handytasks.model.ReminderParams;
 import com.handytasks.handytasks.model.Task;
 import com.handytasks.handytasks.model.TaskReminder;
@@ -24,6 +33,7 @@ import com.handytasks.handytasks.model.TaskTypes;
 import com.handytasks.handytasks.model.Tasks;
 
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,13 +45,16 @@ import static android.media.RingtoneManager.getRingtone;
 /**
  * Created by avsho_000 on 4/1/2015.
  */
-public class HTServiceWorker implements Runnable {
+public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = "HTServiceWorker";
     private final HTService mService;
     private boolean mStopSignal = false;
     private boolean mStopped;
     private ScheduledExecutorService mScheduledPool = Executors.newScheduledThreadPool(1);
     private Hashtable<Task, ScheduledFuture<?>> mSchedules = new Hashtable<>();
+    private GoogleApiClient mGoogleAPIClient;
+    private LocationRequest mLocationRequest;
+    private Location mLastKnownLocation;
 
     public HTServiceWorker(HTService service) {
         mService = service;
@@ -83,6 +96,15 @@ public class HTServiceWorker implements Runnable {
 
     private void processSchedules(Tasks tasks) {
         synchronized (tasks) {
+            // check absent scheduled tasks
+            Enumeration<Task> enumKey = mSchedules.keys();
+            while (enumKey.hasMoreElements()) {
+                Task key = enumKey.nextElement();
+                if (!tasks.contains(key)) {
+                    mSchedules.remove(key);
+                }
+            }
+
             for (final Task task : tasks.getList()) {
                 if (task.isCompleted()) {
                     continue;
@@ -122,26 +144,46 @@ public class HTServiceWorker implements Runnable {
     }
 
     private void remind(Task task) {
+        String title;
+        if (task.getReminder().getType() == TaskReminder.ReminderType.Location) {
+            title = "You are near location";
+        } else {
+            title = "Time for task";
+        }
         Log.d(TAG, "Reminder for task " + task.getTaskPlainText() + " sent");
-        sendNotification("Task reminder", task.getTaskPlainText());
+        sendNotification(title, task.getTaskPlainText());
         playRingtoneIfRequired();
         task.setReminder(null);
         mService.sendMessageToUI(1);
         // task.getParent().requestUpdateFromService();
     }
 
-
     @Override
     public void run() {
         int i = 0;
+        mGoogleAPIClient = new GoogleApiClient.Builder(mService.getApplicationContext())
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        mGoogleAPIClient.connect();
+
         while (!mStopSignal) {
+
+
             if (((HTApplication) mService.getApplication()).isAPIInitialized()) {
                 ///sendNotification("API status", "ready");
 
                 ((HTApplication) mService.getApplication()).getTaskTypes().getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
                     @Override
-                    public void OnSuccess(Tasks result, int title) {
+                    public void OnSuccess(final Tasks result, int title) {
                         processSchedules(result);
+                        result.addChangedEventHandler(new ITaskListChanged() {
+                            @Override
+                            public void TaskListChanged() {
+                                processSchedules(result);
+                            }
+                        });
                     }
 
                     @Override
@@ -201,5 +243,78 @@ public class HTServiceWorker implements Runnable {
 
     public boolean isStopped() {
         return mStopped;
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, mLocationRequest, new LocationListener() {
+            @Override
+            public void onLocationChanged(final Location location) {
+                mLastKnownLocation = location;
+                if (((HTApplication) mService.getApplication()).isAPIInitialized()) {
+
+                    ((HTApplication) mService.getApplication()).getTaskTypes().getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
+                        @Override
+                        public void OnSuccess(final Tasks result, int title) {
+                            processLocationUpdate(location, result);
+                        }
+
+                        @Override
+                        public void OnFailure(String result) {
+
+                        }
+                    });
+                }
+            }
+        });
+
+    }
+
+    private void processLocationUpdate(Location currentLocation, Tasks tasks) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
+        String proximityDistanceStr = prefs.getString("proximity_distance", "100");
+        int proximityDistance = 100;
+        if (null == proximityDistanceStr) {
+            proximityDistance = Integer.getInteger(proximityDistanceStr, proximityDistance);
+        }
+
+        synchronized (tasks) {
+            for (final Task task : tasks.getList()) {
+                if (task.isCompleted()) {
+                    continue;
+                }
+
+                TaskReminder reminder = task.getReminder();
+                if (null != reminder) {
+                    if (reminder.getType() == TaskReminder.ReminderType.Location) {
+                        ReminderLocationData locationData = reminder.getParams().getLocationData();
+
+                        Location taskLocation = new Location("reverseGeocoded");
+                        taskLocation.setLatitude(locationData.getLatitude());
+                        taskLocation.setLongitude(locationData.getLongitude());
+
+                        if (taskLocation.distanceTo(currentLocation) <= proximityDistance) {
+                            remind(task);
+                        }
+
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.e(TAG, "Connection failed");
     }
 }

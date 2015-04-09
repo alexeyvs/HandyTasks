@@ -11,4 +11,18 @@
         <item>2</item>
         <item>3</item>
     </string-array>
+
+    <string-array name="proximityCaptions">
+        <item>10m</item>
+        <item>50m</item>
+        <item>100m</item>
+        <item>500m</item>
+    </string-array>
+
+    <string-array name="proximityValues">
+        <item>10</item>
+        <item>50</item>
+        <item>100</item>
+        <item>500</item>
+    </string-array>
 </resources>

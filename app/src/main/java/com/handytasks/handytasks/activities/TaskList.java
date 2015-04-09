@@ -71,7 +71,6 @@ public class TaskList extends Activity {
         if (!HTService.isRunning()) {
             startService(new Intent(this, HTService.class));
         }
-        ;
 
         bindService();
     }
@@ -129,26 +128,21 @@ public class TaskList extends Activity {
                 setTitle(title);
                 mTasks = result;
                 mAdapter = new TasksAdapter(TaskList.this, mTasks);
-                mTasks.setChangedEventHandler(mAdapter);
+                mTasks.addChangedEventHandler(mAdapter);
                 mAdapter.setActivity(TaskList.this);
 
                 com.terlici.dragndroplist.DragNDropListView listView = ((com.terlici.dragndroplist.DragNDropListView) findViewById(R.id.todoListView));
                 listView.setDragNDropAdapter(mAdapter);
-                // listView.setAdapter(mAdapter);
-                // listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
                 mTasks.readIfEmpty(new IAsyncResult() {
                     @Override
                     public void OnSuccess(String result) {
-                        mTasks.startWatchForChanges();
                         // check if we need to enable filter
                         Intent intent = getIntent();
                         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                             mAdapter.setFilter(intent.getStringExtra(SearchManager.QUERY));
                             setTitle("Search results");
                         }
-
-
                     }
 
                     @Override
@@ -302,6 +296,7 @@ public class TaskList extends Activity {
                 intent = new Intent(this, TaskView.class);
                 intent.putExtra("requestCode", TaskView.REQUEST_CODE_ADD_MODE);
                 startActivityForResult(intent, TaskView.REQUEST_CODE_ADD_MODE);
+                overridePendingTransition(R.anim.in, R.anim.out);
                 return true;
             }
             case R.id.action_select_cloud_provider:
