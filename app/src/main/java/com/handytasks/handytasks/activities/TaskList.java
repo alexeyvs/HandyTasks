@@ -14,9 +14,14 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -30,6 +35,12 @@ import com.handytasks.handytasks.model.Task;
 import com.handytasks.handytasks.model.TaskTypes;
 import com.handytasks.handytasks.model.Tasks;
 import com.handytasks.handytasks.service.HTService;
+import com.nhaarman.listviewanimations.appearance.simple.AlphaInAnimationAdapter;
+import com.nhaarman.listviewanimations.itemmanipulation.DynamicListView;
+import com.nhaarman.listviewanimations.itemmanipulation.dragdrop.OnItemMovedListener;
+import com.nhaarman.listviewanimations.itemmanipulation.dragdrop.TouchViewDraggableManager;
+import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.OnDismissCallback;
+import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.undo.SimpleSwipeUndoAdapter;
 
 public class TaskList extends Activity {
     private static final String TAG = "TaskList activity";
@@ -62,7 +73,7 @@ public class TaskList extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_list);
         Bundle extras = getIntent().getExtras();
-        if (null == extras) {
+        if (null == extras || null == extras.getString("TasksType")) {
             mType = TaskTypes.TaskListTypes.MainList;
         } else {
             mType = TaskTypes.TaskListTypes.valueOf(getIntent().getExtras().getString("TasksType", TaskTypes.TaskListTypes.MainList.toString()));
@@ -131,8 +142,46 @@ public class TaskList extends Activity {
                 mTasks.addChangedEventHandler(mAdapter);
                 mAdapter.setActivity(TaskList.this);
 
-                com.terlici.dragndroplist.DragNDropListView listView = ((com.terlici.dragndroplist.DragNDropListView) findViewById(R.id.todoListView));
-                listView.setDragNDropAdapter(mAdapter);
+                final com.nhaarman.listviewanimations.itemmanipulation.DynamicListView listView = ((com.nhaarman.listviewanimations.itemmanipulation.DynamicListView) findViewById(R.id.todoListView));
+                listView.enableDragAndDrop();
+                listView.setDraggableManager(new TouchViewDraggableManager(R.id.grep_handle));
+                listView.setOnItemMovedListener(new MyOnItemMovedListener(mAdapter));
+                listView.setOnItemLongClickListener(new MyOnItemLongClickListener(listView));
+
+                SimpleSwipeUndoAdapter simpleSwipeUndoAdapter = new SimpleSwipeUndoAdapter(mAdapter, getApplicationContext(), new MyOnDismissCallback(mAdapter));
+                /*
+                listView.enableSwipeToDismiss(new OnDismissCallback() {
+                    @Override
+                    public void onDismiss(@NonNull ViewGroup viewGroup, @NonNull int[] reverseSortedPositions) {
+                        Log.d(TAG, "onDismiss");
+                        for (int position : reverseSortedPositions) {
+                            mAdapter.remove(position);
+                        }
+                    }
+                });
+                */
+
+                AlphaInAnimationAdapter animAdapter = new AlphaInAnimationAdapter(simpleSwipeUndoAdapter);
+                animAdapter.setAbsListView(listView);
+                assert animAdapter.getViewAnimator() != null;
+                animAdapter.getViewAnimator().setInitialDelayMillis(500);
+                listView.setAdapter(animAdapter);
+
+                /* Enable swipe to dismiss */
+                listView.enableSimpleSwipeUndo();
+
+
+/*
+                listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                    @Override
+                    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                        listView.startDragging(position);
+                        return true;
+                    }
+                });
+*/
+
+                // listView.enableSimpleSwipeUndo();
 
                 mTasks.readIfEmpty(new IAsyncResult() {
                     @Override
@@ -142,6 +191,19 @@ public class TaskList extends Activity {
                         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                             mAdapter.setFilter(intent.getStringExtra(SearchManager.QUERY));
                             setTitle("Search results");
+                        }
+
+                        if (intent.getStringExtra("action") != null && intent.getStringExtra("action").equals("open_task")) {
+                            // find task
+                            Task taskToOpen = mTasks.findByText(intent.getStringExtra("task_text"));
+                            if (null != taskToOpen) {
+                                Intent newIntent = new Intent(getApplicationContext(), TaskView.class);
+                                newIntent.putExtra("requestCode", TaskView.REQUEST_CODE_EDIT_MODE);
+                                newIntent.putExtra("DATA", taskToOpen);
+                                startActivityForResult(newIntent, TaskView.REQUEST_CODE_EDIT_MODE);
+                                intent.removeExtra("action");
+                                intent.removeExtra("task_text");
+                            }
                         }
                     }
 
@@ -360,6 +422,23 @@ public class TaskList extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private static class MyOnItemLongClickListener implements AdapterView.OnItemLongClickListener {
+
+        private final DynamicListView mListView;
+
+        MyOnItemLongClickListener(final DynamicListView listView) {
+            mListView = listView;
+        }
+
+        @Override
+        public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+            if (mListView != null) {
+                mListView.startDragging(position - mListView.getHeaderViewsCount());
+            }
+            return true;
+        }
+    }
+
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -378,4 +457,46 @@ public class TaskList extends Activity {
             }
         }
     }
+
+    private class MyOnItemMovedListener implements OnItemMovedListener {
+
+        private final TasksAdapter mAdapter;
+
+        private Toast mToast;
+
+        MyOnItemMovedListener(final TasksAdapter adapter) {
+            mAdapter = adapter;
+        }
+
+        @Override
+        public void onItemMoved(final int originalPosition, final int newPosition) {
+            if (mToast != null) {
+                mToast.cancel();
+            }
+
+            mToast = Toast.makeText(getApplicationContext(), "Moved", Toast.LENGTH_SHORT);
+            mToast.show();
+            mAdapter.commitSwap();
+        }
+    }
+
+    private class MyOnDismissCallback implements OnDismissCallback {
+
+        private final TasksAdapter mAdapter;
+
+        @Nullable
+        private Toast mToast;
+
+        MyOnDismissCallback(final TasksAdapter adapter) {
+            mAdapter = adapter;
+        }
+
+        @Override
+        public void onDismiss(@NonNull final ViewGroup listView, @NonNull final int[] reverseSortedPositions) {
+            for (int position : reverseSortedPositions) {
+                getTaskTypes().archiveTask(mAdapter.getItem(position), null, false, TaskList.this.getApplicationContext());
+            }
+        }
+    }
+
 }

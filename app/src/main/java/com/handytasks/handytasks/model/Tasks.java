@@ -29,9 +29,9 @@ public class Tasks implements IFSChangeHandler {
     private final ICloudFS mCloudFS;
     private final TaskTypes.TaskListTypes mType;
     private final ArrayList<Task> mTasksArray = new ArrayList<>();
+    private final ArrayList<ITaskListChanged> mTaskListChangedHandlers;
     ScheduledFuture<?> mLastScheduledStartWatchForChanges;
     private ICloudFile mCloudFile;
-    private ArrayList<ITaskListChanged> mTaskListChangedHandlers;
     private Lock mLock = new ReentrantLock(true);
     private Boolean mGoingToWrite = false;
     private Runnable mWriteFileTask = new Runnable() {
@@ -93,12 +93,10 @@ public class Tasks implements IFSChangeHandler {
         });
 
 
+        mTaskListChangedHandlers = new ArrayList<>();
     }
 
     public void addChangedEventHandler(ITaskListChanged listChangedEvent) {
-        if (null == mTaskListChangedHandlers) {
-            mTaskListChangedHandlers = new ArrayList<>();
-        }
         synchronized (mTaskListChangedHandlers) {
             mTaskListChangedHandlers.add(listChangedEvent);
         }
@@ -362,6 +360,17 @@ public class Tasks implements IFSChangeHandler {
 
     public boolean contains(final Task key) {
         return mTasksArray.contains(key);
+    }
+
+    public Task findByText(final String taskText) {
+        synchronized (mTasksArray) {
+            for (Task task : mTasksArray) {
+                if (task.getTaskPlainText().equals(taskText)) {
+                    return task;
+                }
+            }
+        }
+        return null;
     }
 
     public enum SortTypes {

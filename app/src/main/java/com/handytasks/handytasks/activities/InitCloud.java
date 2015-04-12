@@ -39,23 +39,22 @@ public class InitCloud extends Activity {
 
     public void onInitDropbox(View view) {
         SharedPreferences prefs = getSharedPreferences(
-                "com.handytasks.handytasks", Context.MODE_PRIVATE);
-        String type = prefs.getString("cloud_type", "Dropbox");
+                "com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
         prefs.edit().putString("cloud_type", "Dropbox").apply();
+
         ((HTApplication) getApplication()).resetCloudAPI();
         startInitCloud();
     }
 
     public void onInitGoogleDrive(View view) {
         SharedPreferences prefs = getSharedPreferences(
-                "com.handytasks.handytasks", Context.MODE_PRIVATE);
-        String type = prefs.getString("cloud_type", "Dropbox");
+                "com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
         prefs.edit().putString("cloud_type", "Google Drive").apply();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setTitle("Warning")
-                .setMessage("Google Drive sync are not always happen immediately when your todo list changes somewhere outside this application. To force sync use 'Request sync' menu item in tasks list.")
+                .setMessage("Google Drive sync are not always happen immediately when your todo list changes somewhere outside this application. To force sync use 'Sync now' menu item in task list.")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setNeutralButton("OK", new DialogInterface.OnClickListener() {
                     @Override

@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -32,6 +34,7 @@ import com.handytasks.handytasks.model.ReminderLocationData;
 import com.handytasks.handytasks.model.ReminderParams;
 import com.handytasks.handytasks.model.Task;
 import com.handytasks.handytasks.model.TaskReminder;
+import com.handytasks.handytasks.model.TimeIntervals;
 import com.sleepbot.datetimepicker.time.RadialPickerLayout;
 import com.sleepbot.datetimepicker.time.TimePickerDialog;
 
@@ -49,8 +52,9 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     public static final String DATEPICKER_TAG = "datepicker";
     public static final String TIMEPICKER_TAG = "timepicker";
     private static final String TAG = "TaskView activity";
+    private final static int TIME_INTERVALS_MENU_ID_START = 100;
     private int mRequestCode;
-    private Task m_TaskItem;
+    private Task mTaskItem;
     private TextView taskText = null;
     private CheckBox mTaskCompleted = null;
     private TextView mDateSelector;
@@ -59,11 +63,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     private TaskReminder.ReminderType mReminderType;
     private TextView mReminderTypeSelect;
     private TextView mLocationSelector;
+    private TimeIntervals mTimeIntervals;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putInt("requestCode", mRequestCode);
-        outState.putParcelable("taskItem", m_TaskItem);
+        outState.putParcelable("taskItem", mTaskItem);
         super.onSaveInstanceState(outState);
     }
 
@@ -72,24 +77,25 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_view);
 
+        mTimeIntervals = new TimeIntervals(this);
         taskText = (TextView) findViewById(R.id.editText);
 
         if (savedInstanceState != null) {
             mRequestCode = savedInstanceState.getInt("requestCode");
-            m_TaskItem = savedInstanceState.getParcelable("taskItem");
+            mTaskItem = savedInstanceState.getParcelable("taskItem");
         } else {
             Bundle data = getIntent().getExtras();
             mRequestCode = data.getInt("requestCode");
             switch (mRequestCode) {
                 case REQUEST_CODE_ADD_MODE: {
-                    m_TaskItem = new Task();
-                    m_TaskItem.setTaskText("");
+                    mTaskItem = new Task();
+                    mTaskItem.setTaskText("");
                     UpdateTaskText();
                     break;
                 }
 
                 case REQUEST_CODE_EDIT_MODE: {
-                    m_TaskItem = data.getParcelable("DATA");
+                    mTaskItem = data.getParcelable("DATA");
                     UpdateTaskText();
                     break;
                 }
@@ -97,7 +103,19 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         }
 
         mTaskCompleted = (CheckBox) findViewById(R.id.taskCompleted);
-        mTaskCompleted.setChecked(m_TaskItem.isCompleted());
+        mTaskCompleted.setChecked(mTaskItem.isCompleted());
+
+        taskText.addTextChangedListener(new TextWatcher() {
+            public void afterTextChanged(Editable s) {
+                mTaskItem.setTaskText(s.toString());
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+        });
 
         mReminderTypeSelect = ((TextView) findViewById(R.id.reminder_type_select));
         mDateSelector = ((TextView) findViewById(R.id.reminder_timed_date));
@@ -105,7 +123,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         mLocationSelector = ((TextView) findViewById(R.id.reminder_select_location));
 
         // update reminder controls
-        if (null != m_TaskItem.getReminder()) {
+        if (null != mTaskItem.getReminder()) {
             onToggleReminder(null);
         }
 
@@ -118,7 +136,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     private boolean isTomorrow(Date date) {
         return com.handytasks.handytasks.utils.DateUtils.isWithinDaysFuture(date, 1);
     }
-
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
@@ -136,7 +153,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     public void onToggleReminder(View view) {
         LinearLayout layout = ((LinearLayout) findViewById(R.id.reminder_params_layout));
         if (layout.getVisibility() == View.VISIBLE) {
-            m_TaskItem.setReminder(null);
+            mTaskItem.setReminder(null);
             UpdateTaskText();
             layout.setVisibility(View.GONE);
             return;
@@ -147,14 +164,14 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
         }
 
-        if (null == m_TaskItem.getReminder() && mReminderParams != null) {
+        if (null == mTaskItem.getReminder() && mReminderParams != null) {
             // reuse cached values
-            m_TaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
-        } else if (m_TaskItem.getReminder() != null) {
+            mTaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
+        } else if (mTaskItem.getReminder() != null) {
             // get default values from task if any
-            mReminderParams = m_TaskItem.getReminder().getParams();
-            mReminderType = m_TaskItem.getReminder().getType();
-        } else if (m_TaskItem.getReminder() == null) {
+            mReminderParams = mTaskItem.getReminder().getParams();
+            mReminderType = mTaskItem.getReminder().getType();
+        } else if (mTaskItem.getReminder() == null) {
             // set defaults
             mReminderParams = new ReminderParams(new Date());
             mReminderType = TaskReminder.ReminderType.Timed;
@@ -182,7 +199,11 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             }
 
             // set time
-            mTimeSelector.setText(mReminderParams.getTriggerDateUFString(getApplicationContext(), DateUtils.FORMAT_SHOW_TIME));
+            String timeCaption = mTimeIntervals.getCaptionByTime(mReminderParams.getTriggerDate());
+            if (null == timeCaption) {
+                timeCaption = mReminderParams.getTriggerDateUFString(getApplicationContext(), DateUtils.FORMAT_SHOW_TIME);
+            }
+            mTimeSelector.setText(timeCaption);
 
         } else if (mReminderType == TaskReminder.ReminderType.Location) {
             mReminderTypeSelect.setText("Remind near location");
@@ -207,18 +228,18 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     private void ReturnData(int action) {
         Intent intent = new Intent();
-        intent.putExtra("DATA", m_TaskItem);
+        intent.putExtra("DATA", mTaskItem);
         intent.putExtra("ACTION", action);
         setResult(Activity.RESULT_OK, intent);
     }
 
     private void UpdateTaskText() {
-        taskText.setText(m_TaskItem.getTaskPlainText());
+        taskText.setText(mTaskItem.getTaskPlainText());
     }
 
     public void onTaskCompleted(View view) {
         Log.d(TAG, "onTaskCompleted");
-        m_TaskItem.setCompleted(mTaskCompleted.isChecked());
+        mTaskItem.setCompleted(mTaskCompleted.isChecked());
         UpdateTaskText();
     }
 
@@ -232,6 +253,16 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         c.set(Calendar.YEAR, cNow.get(Calendar.YEAR));
         c.set(Calendar.MONTH, cNow.get(Calendar.MONTH));
         c.set(Calendar.DAY_OF_MONTH, cNow.get(Calendar.DAY_OF_MONTH));
+        mReminderParams.setTriggerDate(c.getTime());
+    }
+
+    private void setTime(TimeIntervals.TimeInterval interval) {
+        mTimeSelector.setText(interval.getCaption());
+        Calendar c = Calendar.getInstance(),
+                cNow = Calendar.getInstance();
+        c.setTime(mReminderParams.getTriggerDate());
+        c.set(Calendar.HOUR_OF_DAY, interval.getHours());
+        c.set(Calendar.MINUTE, interval.getMinutes());
         mReminderParams.setTriggerDate(c.getTime());
     }
 
@@ -249,11 +280,11 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         mReminderParams.setTriggerDate(c.getTime());
     }
 
-
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         final Calendar calendar = Calendar.getInstance();
-        switch (item.getItemId()) {
+        int itemId = item.getItemId();
+        switch (itemId) {
             case R.id.action_select_today: {
                 setToday();
                 break;
@@ -294,6 +325,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                 OnUpdateReminderParams(mReminderParams);
                 break;
         }
+
+        if (itemId >= TIME_INTERVALS_MENU_ID_START && itemId <= TIME_INTERVALS_MENU_ID_START + mTimeIntervals.getCount()) {
+            TimeIntervals.TimeInterval interval = mTimeIntervals.getInterval(TIME_INTERVALS_MENU_ID_START - itemId);
+            setTime(interval);
+        }
+
         return super.onContextItemSelected(item);
     }
 
@@ -329,7 +366,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         super.onNewIntent(intent);
         overridePendingTransition(R.anim.in, R.anim.out);
     }
-
 
     public void setUnderline(TextView textView, boolean underline) {
         if (underline) {
@@ -376,6 +412,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         PopupMenu popupMenu = new PopupMenu(TaskView.this, v);
         if (v == mTimeSelector) {
             popupMenu.getMenuInflater().inflate(R.menu.menu_context_select_time, popupMenu.getMenu());
+
+            int i = TIME_INTERVALS_MENU_ID_START;
+            for (TimeIntervals.TimeInterval timeInterval : mTimeIntervals.getTimeIntervals()) {
+                popupMenu.getMenu().add(0, i++, 0, mTimeIntervals.formatMenuTitle(timeInterval));
+            }
+            // popupMenu.getMenu().add(0, 10, 100, "test item");
         } else if (v == mDateSelector) {
             popupMenu.getMenuInflater().inflate(R.menu.menu_context_select_date, popupMenu.getMenu());
         } else if (v == mReminderTypeSelect) {
@@ -387,7 +429,8 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 final Calendar calendar = Calendar.getInstance();
-                switch (item.getItemId()) {
+                final int itemId = item.getItemId();
+                switch (itemId) {
                     case R.id.action_select_today: {
                         setToday();
                         break;
@@ -428,6 +471,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                         OnUpdateReminderParams(mReminderParams);
                         break;
                 }
+                if (itemId >= TIME_INTERVALS_MENU_ID_START && itemId <= TIME_INTERVALS_MENU_ID_START + mTimeIntervals.getCount()) {
+                    TimeIntervals.TimeInterval interval = mTimeIntervals.getInterval(itemId - TIME_INTERVALS_MENU_ID_START);
+                    setTime(interval);
+                }
+
+
                 return true;
             }
         });
@@ -479,7 +528,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     @Override
     public void OnUpdateReminderParams(ReminderParams params) {
-        m_TaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
+        mTaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
         UpdateTaskText();
     }
 }

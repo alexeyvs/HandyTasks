@@ -2,6 +2,7 @@ package com.handytasks.handytasks.impl.GoogleDrive;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,13 +26,13 @@ public class GDAPI implements ICloudAPI, GoogleApiClient.ConnectionCallbacks {
     private static final String TAG = "GDAPI";
     private static final int REQUEST_CODE_RESOLUTION = 4;
     private final GoogleApiClient m_GoogleApiClient;
-    private final Activity mActivity;
+    private final ContextWrapper mActivity;
     private final Context mContext;
     private boolean m_Ready = false;
     private GDFS m_FS;
     private IInitAPI mConnectionCallback;
 
-    public GDAPI(Activity activity, Context context, final IInitAPI callback, final boolean allowStartOfNewActivities) {
+    public GDAPI(ContextWrapper activity, Context context, final IInitAPI callback, final boolean allowStartOfNewActivities) {
         mContext = context;
         mConnectionCallback = callback;
         mActivity = activity;
@@ -49,7 +50,7 @@ public class GDAPI implements ICloudAPI, GoogleApiClient.ConnectionCallbacks {
 
                         try {
                             if (allowStartOfNewActivities) {
-                                connectionResult.startResolutionForResult(mActivity, REQUEST_CODE_RESOLUTION);
+                                connectionResult.startResolutionForResult((Activity) mActivity, REQUEST_CODE_RESOLUTION);
                                 callback.OnActionRequired(GDAPI.this);
                             } else {
                                 callback.OnFailure("Failed to resolve connection issue");

@@ -2,12 +2,15 @@ package com.handytasks.handytasks.service;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.media.Ringtone;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -64,15 +67,28 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         mStopSignal = true;
     }
 
-    private void sendNotification(String title, String text) {
+    private void sendNotification(NotificationType notificationType, String title, String text) {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(mService.getApplicationContext())
-                        .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle(title)
                         .setContentText(text);
+
+        switch (notificationType) {
+            case TimedReminder:
+                mBuilder.setSmallIcon(R.drawable.ic_notification_timed);
+                break;
+            case LocationReminder:
+                mBuilder.setSmallIcon(R.drawable.ic_notification_location);
+                break;
+            default:
+                mBuilder.setSmallIcon(R.mipmap.ic_launcher);
+                break;
+        }
+
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(mService.getApplicationContext(), MainActivity.class);
-
+        resultIntent.putExtra("action", "open_task");
+        resultIntent.putExtra("task_text", text);
         // The stack builder object will contain an artificial back stack for the
         // started Activity.
         // This ensures that navigating backward from the Activity leads out of
@@ -84,17 +100,17 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(
-                        0,
+                        HTApplication.OPEN_TASK,
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
         NotificationManager mNotificationManager =
-                (NotificationManager) mService.getSystemService(mService.getApplicationContext().NOTIFICATION_SERVICE);
+                (NotificationManager) mService.getSystemService(Service.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify(0, mBuilder.build());
+        mNotificationManager.notify((title + text).hashCode(), mBuilder.build());
     }
 
-    private void processSchedules(Tasks tasks) {
+    private void processSchedules(final Tasks tasks) {
         synchronized (tasks) {
             // check absent scheduled tasks
             Enumeration<Task> enumKey = mSchedules.keys();
@@ -144,18 +160,31 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     }
 
     private void remind(Task task) {
-        String title;
-        if (task.getReminder().getType() == TaskReminder.ReminderType.Location) {
-            title = "You are near location";
-        } else {
-            title = "Time for task";
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
+        if (true == prefs.getBoolean("reminder_notify", true)) {
+            String title;
+            NotificationType notificationType;
+            if (task.getReminder().getType() == TaskReminder.ReminderType.Location) {
+                title = "You are near location";
+                notificationType = NotificationType.LocationReminder;
+            } else {
+                title = "Time for task";
+                notificationType = NotificationType.TimedReminder;
+            }
+            Log.d(TAG, "Reminder for task " + task.getTaskPlainText() + " sent");
+            sendNotification(notificationType, title, task.getTaskPlainText());
+
+            // play alert
+            playRingtoneIfRequired();
+
+            // vibrate
+            vibrateIfRequired();
         }
-        Log.d(TAG, "Reminder for task " + task.getTaskPlainText() + " sent");
-        sendNotification(title, task.getTaskPlainText());
-        playRingtoneIfRequired();
+        // reset reminder
         task.setReminder(null);
+
+        // update task list
         mService.sendMessageToUI(1);
-        // task.getParent().requestUpdateFromService();
     }
 
     @Override
@@ -199,12 +228,12 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 }
 
             } else {
-                //sendNotification("API status", "not ready");
-                ((HTApplication) mService.getApplication()).generateAPI(null, mService.getApplicationContext(), new IInitAPI() {
+
+                ((HTApplication) mService.getApplication()).generateAPI(mService, mService.getApplicationContext(), new IInitAPI() {
                     @Override
                     public void OnSuccess(ICloudAPI result) {
                         ((HTApplication) mService.getApplication()).setAPI(result);
-                        sendNotification("API status", "now ready");
+                        sendNotification(NotificationType.System, "API status", "now ready");
                     }
 
                     @Override
@@ -214,7 +243,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
                     @Override
                     public void OnFailure(Object result) {
-                        sendNotification("API status", "error: " + result.toString());
+                        sendNotification(NotificationType.System, "API status", "error: " + result.toString());
                     }
                 }, false);
             }
@@ -238,6 +267,17 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
             Uri notification = Uri.parse(ringTone);
             Ringtone r = getRingtone(mService.getApplicationContext(), notification);
             r.play();
+        }
+    }
+
+    private void vibrateIfRequired() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
+        if (prefs.getBoolean("notification_vibrate", false)) {
+            Vibrator v = (Vibrator) mService.getSystemService(Context.VIBRATOR_SERVICE);
+            if (v.hasVibrator()) {
+                long[] pattern = {0, 500, 1000, 500, 1000, 500, 1000};
+                v.vibrate(pattern, -1);
+            }
         }
     }
 
@@ -299,13 +339,10 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                         if (taskLocation.distanceTo(currentLocation) <= proximityDistance) {
                             remind(task);
                         }
-
-
                     }
                 }
             }
         }
-
     }
 
     @Override
@@ -316,5 +353,11 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.e(TAG, "Connection failed");
+    }
+
+    private enum NotificationType {
+        TimedReminder,
+        LocationReminder,
+        System
     }
 }

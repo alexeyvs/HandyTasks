@@ -38,4 +38,13 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_pick_location">PickLocationActivity</string>
+    <string name="archived_postions">Archived tasks: %s</string>
+    <string name="taptoundo">Tap to undo</string>
+    <string name="itemdeleted">Task archived, swipe to confirm</string>
+
+    <string name="timeinterval_morning">Morning</string>
+    <string name="timeinterval_afternoon">Afternoon</string>
+    <string name="timeinterval_evening">Evening</string>
+    <string name="timeinterval_night">Night</string>
+
 </resources>

@@ -21,7 +21,6 @@ public class MainActivity extends Activity {
 
         Intent intent = getIntent();
 
-
         moveOut();
     }
 
@@ -73,7 +72,19 @@ public class MainActivity extends Activity {
     }
 
     private void moveToTaskViewActivity() {
-        startActivity(new Intent(this, TaskList.class));
+        Intent intent = new Intent(this, TaskList.class);
+        String action = getIntent().getStringExtra("action");
+        String text = getIntent().getStringExtra("task_text");
+        if (action != null) {
+            intent.putExtra("action", action);
+            getIntent().removeExtra("action");
+        }
+        if (text != null) {
+            intent.putExtra("task_text", text);
+            getIntent().removeExtra("task_text");
+        }
+
+        startActivity(intent);
         finish();
     }
 

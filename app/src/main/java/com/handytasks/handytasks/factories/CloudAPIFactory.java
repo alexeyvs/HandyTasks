@@ -2,8 +2,8 @@ package com.handytasks.handytasks.factories;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import com.handytasks.handytasks.impl.Dropbox.DbAPI;
 import com.handytasks.handytasks.impl.GoogleDrive.GDAPI;
@@ -33,10 +33,10 @@ public class CloudAPIFactory {
     }
 
 
-    public static ICloudAPI generateAPI(Activity parent, Context context, IInitAPI callback, boolean allowStartOfNewActivities) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        // parent.getSharedPreferences("com.handytasks.handytasks", Context.MODE_PRIVATE);
-        String type = prefs.getString("cloud_type", "Dropbox");
+    public static ICloudAPI generateAPI(ContextWrapper parent, Context context, IInitAPI callback, boolean allowStartOfNewActivities) {
+        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = parent.getSharedPreferences("com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
+        String type = prefs.getString("cloud_type", "");
 
 
         switch (type) {
@@ -44,7 +44,6 @@ public class CloudAPIFactory {
                 return new DbAPI(parent, context, callback, allowStartOfNewActivities);
             case "Google Drive":
                 return new GDAPI(parent, context, callback, allowStartOfNewActivities);
-
         }
         callback.OnFailure("Unsupported cloud provider");
         return null;

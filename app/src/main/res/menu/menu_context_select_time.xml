@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/action_select_morning"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="Morning (9:00)" />
-    <item
-        android:id="@+id/action_select_day"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="Day (13:00)" />
-    <item
-        android:id="@+id/action_select_evening"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="Evening (18:00)" />
+
     <item
         android:id="@+id/action_select_pick_time"
         android:orderInCategory="100"

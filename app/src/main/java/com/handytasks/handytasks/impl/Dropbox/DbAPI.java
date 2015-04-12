@@ -2,6 +2,7 @@ package com.handytasks.handytasks.impl.Dropbox;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.handytasks.handytasks.R;
@@ -23,7 +24,7 @@ public class DbAPI implements ICloudAPI {
     private ICloudFS m_CloudFS;
     private boolean m_isReady = false;
 
-    public DbAPI(Activity activity, Context context, IInitAPI callback, boolean allowStartOfNewActivities) {
+    public DbAPI(ContextWrapper activity, Context context, IInitAPI callback, boolean allowStartOfNewActivities) {
         mContext = context;
         m_DbxAcctMgr = DbxAccountManager.getInstance(context, APP_KEY, APP_SECRET);
         if (!m_DbxAcctMgr.hasLinkedAccount()) {
@@ -31,7 +32,7 @@ public class DbAPI implements ICloudAPI {
                 callback.OnFailure(activity.getString(R.string.cant_link_dropbox_without_parent_activity));
             } else {
                 if (allowStartOfNewActivities) {
-                    m_DbxAcctMgr.startLink(activity, REQUEST_LINK_TO_DBX);
+                    m_DbxAcctMgr.startLink((Activity) activity, REQUEST_LINK_TO_DBX);
                     callback.OnActionRequired(this);
                 } else {
                     callback.OnFailure(R.string.dropbox_not_linked);

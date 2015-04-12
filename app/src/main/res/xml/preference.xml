@@ -24,7 +24,7 @@
     <PreferenceCategory android:title="Notifications">
 
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="reminder_notify"
             android:title="@string/pref_title_new_message_notifications" />
 

@@ -3,7 +3,10 @@ package com.handytasks.handytasks.controls;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,15 +23,20 @@ import com.handytasks.handytasks.interfaces.ITaskListChanged;
 import com.handytasks.handytasks.model.Task;
 import com.handytasks.handytasks.model.TaskTypes;
 import com.handytasks.handytasks.model.Tasks;
-import com.terlici.dragndroplist.DragNDropAdapter;
-import com.terlici.dragndroplist.DragNDropListView;
+import com.nhaarman.listviewanimations.ArrayAdapter;
+import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.undo.UndoAdapter;
+import com.nhaarman.listviewanimations.util.Swappable;
 
 import java.util.ArrayList;
+
+//import com.terlici.dragndroplist.DragNDropAdapter;
+//import com.terlici.dragndroplist.DragNDropListView;
 
 /**
  * Created by avsho_000 on 3/20/2015.
  */
-public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListChanged, DragNDropAdapter {
+public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged, Swappable, UndoAdapter /*,DragNDropAdapter */ {
+    private static final long INVALID_ID = -1;
     private final ArrayList<Task> mObjects;
     private final Tasks mTasks;
     private Context mContext = null;
@@ -36,9 +44,19 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
     private TaskList mActivity;
 
     public TasksAdapter(Context context, Tasks tasks) {
-        super(context, R.layout.item_taskview, tasks.getList());
+        super(tasks.getList());
         mTasks = tasks;
+        mContext = context;
         mObjects = tasks.getList();
+    }
+
+    private Context getContext() {
+        return mContext;
+    }
+
+    @Override
+    public boolean hasStableIds() {
+        return true;
     }
 
     @Override
@@ -48,22 +66,32 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
 
     @Override
     public Task getItem(int position) {
+        if (position < 0 || position >= mObjects.size()) {
+            return null;
+        }
         return mObjects.get(position);
     }
 
     @Override
-    public int getPosition(Task item) {
-        return mObjects.indexOf(item);
-    }
-
-    @Override
     public long getItemId(int position) {
-        return position;
+        if (position < 0 || position >= mObjects.size()) {
+            return INVALID_ID;
+        }
+
+        return getItem(position).getId();
     }
 
     @Override
     public void notifyDataSetChanged() {
         super.notifyDataSetChanged();
+    }
+
+    @NonNull
+    public Task remove(final int location) {
+        Task result = mObjects.remove(location);
+        notifyDataSetChanged();
+        mTasks.Write();
+        return result;
     }
 
     private int getAppearance(final int value) {
@@ -82,7 +110,7 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
     }
 
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, final View convertView1, final ViewGroup parent) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         String fontSizeVal = prefs.getString("task_list_font_size", "2");
         try {
@@ -91,43 +119,44 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
             fontSizeVal = "2";
         }
 
-
-        // Get the data item for this position
         Task task = getItem(position);
-
-        // Check if an existing view is being reused, otherwise inflate the view
-        ViewHolder viewHolder; // view lookup cache stored in tag
-        // if (convertView == null) {
-        viewHolder = new ViewHolder();
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
         if (mFilter != null && !task.getTaskText().contains(mFilter)) {
             return inflater.inflate(R.layout.empty_view, parent, false);
         }
 
-        convertView = inflater.inflate(R.layout.item_taskview, parent, false);
-        viewHolder.Text = (TextView) convertView.findViewById(R.id.TaskText);
-        ((TextView) convertView.findViewById(R.id.TaskText)).setTextAppearance(getContext(), getAppearance(Integer.parseInt(fontSizeVal)));
+        View resultView = inflater.inflate(R.layout.item_taskview, parent, false);
+        TextView textView = (TextView) resultView.findViewById(R.id.task_text);
+        textView.setTextAppearance(getContext(), getAppearance(Integer.parseInt(fontSizeVal)));
 
-        convertView.setTag(viewHolder);
-        // } else {
-        //    viewHolder = (ViewHolder) convertView.getTag();
-        // }
-        // Populate the data into the template view using the data object
-        viewHolder.Text.setText(task.getTaskPlainText());
+        textView.setText(task.getTaskPlainText());
         task.setAdapter(this);
-        final CheckBox currentItemCompleted = (CheckBox) convertView.findViewById(R.id.isCompleted);
+        final CheckBox currentItemCompleted = (CheckBox) resultView.findViewById(R.id.isCompleted);
         if (task.isCompleted()) {
-            TextView currentItem = (TextView) convertView.findViewById(R.id.TaskText);
-
             currentItemCompleted.setChecked(true);
-            currentItem.setPaintFlags(currentItem.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            textView.setPaintFlags(textView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         } else {
             currentItemCompleted.setChecked(false);
         }
 
-        ImageView reminderIcon = (ImageView) convertView.findViewById(R.id.reminder_set);
+        ImageView reminderIcon = (ImageView) resultView.findViewById(R.id.reminder_set);
         if (null != task.getReminder()) {
+            switch (task.getReminder().getType()) {
+                case Timed: {
+                    Drawable icon = mActivity.getResources().getDrawable(R.drawable.ic_notification_timed);
+                    icon.mutate().setColorFilter(0xFFFF0000, PorterDuff.Mode.MULTIPLY);
+                    reminderIcon.setImageDrawable(icon);
+                    break;
+                }
+                case Location: {
+                    Drawable icon = mActivity.getResources().getDrawable(R.drawable.ic_notification_location);
+                    icon.mutate().setColorFilter(0xFFFF0000, PorterDuff.Mode.MULTIPLY);
+                    reminderIcon.setImageDrawable(icon);
+                    break;
+                }
+            }
+
             reminderIcon.setVisibility(View.VISIBLE);
         } else {
             reminderIcon.setVisibility(View.GONE);
@@ -160,9 +189,9 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
             }
         });
 
-        convertView.findViewById(R.id.TaskText).setOnTouchListener(new OnTaskListSwipeListener(mActivity.getApplicationContext(), task, mActivity));
+        resultView.findViewById(R.id.task_text).setOnTouchListener(new OnTaskListSwipeListener(mActivity.getApplicationContext(), task, mActivity));
 
-        return convertView;
+        return resultView;
     }
 
     public void setActivity(TaskList activity) {
@@ -179,17 +208,7 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
     }
 
     @Override
-    public int getDragHandler() {
-        return R.id.drag_handle;
-    }
-
-    @Override
-    public void onItemDrag(DragNDropListView parent, View view, int position, long id) {
-
-    }
-
-    @Override
-    public void onItemDrop(DragNDropListView parent, View view, int startPosition, int endPosition, long id) {
+    public void swapItems(final int startPosition, final int endPosition) {
         Task startTask = getItem(startPosition);
         Task newTask = getItem(endPosition);
 
@@ -198,13 +217,26 @@ public class TasksAdapter extends StableArrayAdapter<Task> implements ITaskListC
 
         mObjects.set(startPosition, newTask);
         mObjects.set(endPosition, startTask);
-
-        notifyDataSetChanged();
-        newTask.getParent().Write();
     }
 
-    // View lookup cache
-    private static class ViewHolder {
-        TextView Text;
+    public void commitSwap() {
+        notifyDataSetChanged();
+        mTasks.Write();
+    }
+
+    @NonNull
+    @Override
+    public View getUndoView(final int position, final View convertView, @NonNull final ViewGroup parent) {
+        View view = convertView;
+        if (view == null) {
+            view = LayoutInflater.from(mContext).inflate(R.layout.undo_row, parent, false);
+        }
+        return view;
+    }
+
+    @NonNull
+    @Override
+    public View getUndoClickView(@NonNull final View view) {
+        return view.findViewById(R.id.undo_row_undobutton);
     }
 }

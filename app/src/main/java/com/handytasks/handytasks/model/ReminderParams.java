@@ -9,7 +9,6 @@ import com.handytasks.handytasks.interfaces.IReminderParamsUpdated;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
 /**
  * Created by avsho_000 on 4/1/2015.
@@ -49,7 +48,8 @@ public class ReminderParams {
     }
 
     public String getTriggerDateUFString(Context context, int flags) {
-        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        // Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        Calendar c = Calendar.getInstance();
         c.setTime(mDate);
         return DateUtils.formatDateTime(context, c.getTimeInMillis(), flags);
     }
