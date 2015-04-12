@@ -67,6 +67,7 @@ public class Tasks implements IFSChangeHandler {
     public Tasks(TaskTypes.TaskListTypes type, ICloudFS fs, final String filename, final ICreateTasksResult callback) {
         mType = type;
         mCloudFS = fs;
+        mTaskListChangedHandlers = new ArrayList<>();
 
         mCloudFS.initializeFS(new IAsyncResult() {
             @Override
@@ -93,7 +94,6 @@ public class Tasks implements IFSChangeHandler {
         });
 
 
-        mTaskListChangedHandlers = new ArrayList<>();
     }
 
     public void addChangedEventHandler(ITaskListChanged listChangedEvent) {
@@ -131,11 +131,9 @@ public class Tasks implements IFSChangeHandler {
                 }
                 mLock.unlock();
 
-                if (null != mTaskListChangedHandlers) {
-                    synchronized (mTaskListChangedHandlers) {
-                        for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
-                            mTaskListChangedHandler.TaskListChanged();
-                        }
+                synchronized (mTaskListChangedHandlers) {
+                    for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
+                        mTaskListChangedHandler.TaskListChanged();
                     }
                 }
 
@@ -293,13 +291,12 @@ public class Tasks implements IFSChangeHandler {
     }
 
     public void taskListChanged() {
-        if (null != mTaskListChangedHandlers) {
-            synchronized (mTaskListChangedHandlers) {
-                for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
-                    mTaskListChangedHandler.TaskListChanged();
-                }
+        synchronized (mTaskListChangedHandlers) {
+            for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
+                mTaskListChangedHandler.TaskListChanged();
             }
         }
+
         Write();
     }
 
