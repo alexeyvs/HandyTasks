@@ -1,5 +1,6 @@
 package com.handytasks.handytasks.model;
 
+import android.app.NotificationManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -27,12 +28,14 @@ public class Task implements Parcelable {
 
     private static final String TAG = "Task";
     private final long mId;
+    private NotificationManager mNotificationManager;
     private Tasks m_Parent;
     private String mTaskText = "";
     private int m_LineNumber;
     private TasksAdapter m_Adapter;
     private TaskTypes.TaskListTypes mType;
     private TaskReminder mReminder;
+    private CharSequence notificationTitle;
 
     private Task(Parcel in) {
         mId = new Random().nextLong();
@@ -83,6 +86,7 @@ public class Task implements Parcelable {
 
         if (completed) {
             mTaskText = "+ " + mTaskText;
+            dismissNotification();
         } else {
             mTaskText = mTaskText.replaceFirst("^\\s*[+]\\s*", "");
         }
@@ -113,6 +117,16 @@ public class Task implements Parcelable {
         // restore special values
         setReminder(reminder);
         setCompleted(isCompleted);
+    }
+
+    public void setNotificationManager(NotificationManager notificationManager) {
+        mNotificationManager = notificationManager;
+    }
+
+    public void dismissNotification() {
+        if (mNotificationManager != null) {
+            mNotificationManager.cancel(getTaskPlainText().hashCode() + getLineNumber());
+        }
     }
 
     @Override
@@ -200,4 +214,18 @@ public class Task implements Parcelable {
         }
     }
 
+    public String getNotificationTitle() {
+        TaskReminder reminder = getReminder();
+        if (null == reminder) {
+            return "";
+        }
+
+        if (reminder.getType() == TaskReminder.ReminderType.Timed) {
+            return "Time for task";
+        }
+        if (reminder.getType() == TaskReminder.ReminderType.Location) {
+            return "You are near location";
+        }
+        return "";
+    }
 }

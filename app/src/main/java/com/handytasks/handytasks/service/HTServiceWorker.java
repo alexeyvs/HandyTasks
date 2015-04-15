@@ -14,7 +14,6 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.RemoteInput;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -79,10 +78,36 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     public void processIntent(Intent intent) {
         // check if we need something special
         final Intent currentIntent = intent;
-        if (currentIntent.getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
+        if (currentIntent == null) {
+            return;
+        }
+        if (currentIntent.getAction() != null
+                && currentIntent.getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
             // create new task
             createNewTaskFromGoogleNow(currentIntent);
         }
+
+        if (currentIntent.getAction() != null
+                && currentIntent.getAction().equals("com.handytasks.handytasks.action.DONE")) {
+            int lineNumber = currentIntent.getIntExtra("task_linenumber", -1);
+            String taskText = currentIntent.getStringExtra("task_text");
+            setTaskDone(lineNumber, taskText);
+        }
+
+        if (currentIntent.getAction() != null
+                && currentIntent.getAction().equals("com.handytasks.handytasks.action.DISMISS")) {
+            int lineNumber = currentIntent.getIntExtra("task_linenumber", -1);
+            String taskText = currentIntent.getStringExtra("task_text");
+            dismissNotification(lineNumber, taskText);
+        }
+    }
+
+    void setTaskDone(int lineNumber, String taskText) {
+        ((HTApplication) mService.getApplication()).getTaskTypes().setTaskDone(lineNumber, taskText);
+    }
+
+    void dismissNotification(int lineNumber, String taskText) {
+        ((HTApplication) mService.getApplication()).getTaskTypes().dismissNotification(lineNumber, taskText);
     }
 
     private void createNewTaskFromGoogleNow(final Intent intent) {
@@ -110,19 +135,38 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         }
     }
 
-    private void sendNotification(NotificationType notificationType, String title, String text) {
+    private void sendNotification(NotificationType notificationType, final Task task) {
+
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(mService.getApplicationContext())
-                        .setContentTitle(title)
-                        .setContentText(text);
+                        .setContentTitle(task.getNotificationTitle())
+                        .setContentText(task.getTaskPlainText())
+                        .setAutoCancel(true);
+
+        Intent dismissIntent = new Intent(mService, HTService.class);
+        dismissIntent.setAction("com.handytasks.handytasks.action.DISMISS");
+        dismissIntent.putExtra("task_text", task.getTaskPlainText());
+        dismissIntent.putExtra("task_linenumber", task.getLineNumber());
+        PendingIntent pendingDismissIntent = PendingIntent.getService(mService, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.addAction(R.drawable.ic_dismiss, "Dismiss", pendingDismissIntent);
+
+        Intent doneIntent = new Intent(mService, HTService.class);
+        doneIntent.setAction("com.handytasks.handytasks.action.DONE");
+        doneIntent.putExtra("task_text", task.getTaskPlainText());
+        doneIntent.putExtra("task_linenumber", task.getLineNumber());
+        PendingIntent pendingDoneIntent = PendingIntent.getService(mService, 0, doneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.addAction(R.drawable.ic_check, "Done", pendingDoneIntent);
+
 
         switch (notificationType) {
-            case TimedReminder:
+            case TimedReminder: {
                 mBuilder.setSmallIcon(R.drawable.ic_notification_timed);
                 break;
-            case LocationReminder:
+            }
+            case LocationReminder: {
                 mBuilder.setSmallIcon(R.drawable.ic_notification_location);
                 break;
+            }
             default:
                 mBuilder.setSmallIcon(R.mipmap.ic_launcher);
                 break;
@@ -135,36 +179,25 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 .build();
 
         // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(mService.getApplicationContext(), MainActivity.class);
-        resultIntent.putExtra("action", "open_task");
-        resultIntent.putExtra("task_text", text);
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mService.getApplicationContext());
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(MainActivity.class);
-        // Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        HTApplication.OPEN_TASK,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        mBuilder.setContentIntent(resultPendingIntent);
+        Intent contentIntent = new Intent(mService.getApplicationContext(), MainActivity.class);
+        contentIntent.putExtra("action", "open_task");
+        contentIntent.putExtra("task_text", task.getTaskPlainText());
+        contentIntent.putExtra("task_linenumber", task.getLineNumber());
+
+        PendingIntent pendingContentIntent = PendingIntent.getActivity(mService.getApplicationContext(), 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(pendingContentIntent);
 
         NotificationCompat.Action interruptAction =
-                new NotificationCompat.Action.Builder(R.drawable.ic_notification_location, "Interrupt", resultPendingIntent)
+                new NotificationCompat.Action.Builder(R.drawable.ic_notification_location, "Interrupt", pendingContentIntent)
                         .addRemoteInput(remoteInput)
                         .build();
         mBuilder.extend(new NotificationCompat.WearableExtender().addAction(interruptAction));
 
-
         NotificationManager mNotificationManager =
                 (NotificationManager) mService.getSystemService(Service.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify((title + text).hashCode(), mBuilder.build());
+        task.setNotificationManager(mNotificationManager);
+        mNotificationManager.notify((task.getTaskPlainText()).hashCode() + task.getLineNumber(), mBuilder.build());
     }
 
     private void processSchedules(final Tasks tasks) {
@@ -229,7 +262,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 notificationType = NotificationType.TimedReminder;
             }
             Log.d(TAG, "Reminder for task " + task.getTaskPlainText() + " sent");
-            sendNotification(notificationType, title, task.getTaskPlainText());
+            sendNotification(notificationType, task);
 
             // play alert
             playRingtoneIfRequired();
@@ -292,7 +325,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                     @Override
                     public void OnSuccess(ICloudAPI result) {
                         ((HTApplication) mService.getApplication()).setAPI(result);
-                        sendNotification(NotificationType.System, "API status", "now ready");
+                        // sendNotification(NotificationType.System, "API status", "now ready", null);
                     }
 
                     @Override
@@ -302,7 +335,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
                     @Override
                     public void OnFailure(Object result) {
-                        sendNotification(NotificationType.System, "API status", "error: " + result.toString());
+                        //sendNotification(NotificationType.System, "API status", "error: " + result.toString(), null);
                     }
                 }, false);
             }
@@ -317,7 +350,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
         Boolean enableNotifications = prefs.getBoolean("reminder_notify", false);
         if (enableNotifications) {
-            String ringTone = prefs.getString("notification_ringtone", "default ringtone");
+            String ringTone = prefs.getString("notification_ringtone", "content://settings/system/notification_sound");
             Uri notification = Uri.parse(ringTone);
             Ringtone r = getRingtone(mService.getApplicationContext(), notification);
             r.play();
@@ -329,7 +362,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         if (prefs.getBoolean("notification_vibrate", false)) {
             Vibrator v = (Vibrator) mService.getSystemService(Context.VIBRATOR_SERVICE);
             if (v.hasVibrator()) {
-                long[] pattern = {0, 500, 1000, 500, 1000, 500, 1000};
+                long[] pattern = {0, 300, 1000, 300, 1000, 300, 1000};
                 v.vibrate(pattern, -1);
             }
         }

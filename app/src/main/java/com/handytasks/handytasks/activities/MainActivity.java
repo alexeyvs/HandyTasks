@@ -25,7 +25,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (getIntent().getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
+        if (getIntent().getAction() != null &&
+                getIntent().getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
             // create new task
             Intent downloadIntent = new Intent(getIntent());
             downloadIntent.setClass(this, HTService.class);
@@ -96,15 +97,17 @@ public class MainActivity extends Activity {
             }
         }
 
-        if (getIntent().getAction().equals(Intent.ACTION_SEND)) {
+        if (getIntent().getAction() != null
+                && getIntent().getAction().equals(Intent.ACTION_SEND)) {
             // create new task and show it in gui
             createNewTaskFromSendTo(getIntent());
             return;
         }
 
         Intent intent = new Intent(this, TaskList.class);
-        String action = getIntent().getStringExtra("action");
+        final String action = getIntent().getStringExtra("action");
         String text = getIntent().getStringExtra("task_text");
+        int lineNumber = getIntent().getIntExtra("task_linenumber", -1);
         if (action != null) {
             intent.putExtra("action", action);
             getIntent().removeExtra("action");
@@ -113,9 +116,31 @@ public class MainActivity extends Activity {
             intent.putExtra("task_text", text);
             getIntent().removeExtra("task_text");
         }
+        if (lineNumber != -1) {
+            intent.putExtra("task_linenumber", lineNumber);
+            getIntent().removeExtra("task_linenumber");
+        }
 
-        startActivity(intent);
-        finish();
+        if (action != null && text != null) {
+            ((HTApplication) getApplication()).getTaskTypes().findTaskByPlainTextAndName(lineNumber, text, new TaskTypes.IFindTaskResult() {
+                @Override
+                public void OnSuccess(Task task) {
+                    Intent newIntent = new Intent(getApplicationContext(), TaskView.class);
+                    newIntent.putExtra("requestCode", TaskView.REQUEST_CODE_EDIT_MODE);
+                    newIntent.putExtra("DATA", task);
+                    startActivityForResult(newIntent, TaskView.REQUEST_CODE_EDIT_MODE);
+                }
+
+                @Override
+                public void OnFailure(String error) {
+
+                }
+            });
+        } else {
+            // move to task list
+            startActivity(intent);
+            finish();
+        }
     }
 
     private void createNewTaskFromSendTo(final Intent intent) {

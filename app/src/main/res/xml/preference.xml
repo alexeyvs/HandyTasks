@@ -14,7 +14,7 @@
             android:defaultValue="false"
             android:key="auto_archive_completed"
             android:summary="Whether or not completed tasks should be moved to archive.txt"
-            android:title="Auto archive completed tasks" />
+            android:title="Auto archive" />
 
     </PreferenceCategory>
 

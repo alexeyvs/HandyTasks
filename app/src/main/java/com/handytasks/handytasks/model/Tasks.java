@@ -372,6 +372,19 @@ public class Tasks implements IFSChangeHandler {
         return null;
     }
 
+    public Task findByPlaintextAndLine(final String taskText, final int lineNumber) {
+        synchronized (mTasksArray) {
+            for (Task task : mTasksArray) {
+                if (task.getTaskPlainText().equals(taskText) &&
+                        task.getLineNumber() == lineNumber) {
+                    return task;
+                }
+            }
+        }
+        return null;
+    }
+
+
     public enum SortTypes {
         AZ,
         ZA,

@@ -124,9 +124,75 @@ public class TaskTypes {
         });
     }
 
+    public void dismissNotification(final int lineNumber, final String taskText) {
+        getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
+            @Override
+            public void OnSuccess(Tasks result, int title) {
+                synchronized (result) {
+                    final Task foundTask = result.findByPlaintextAndLine(taskText, lineNumber);
+                    if (null != foundTask) {
+                        foundTask.dismissNotification();
+                    }
+                }
+            }
+
+            @Override
+            public void OnFailure(String result) {
+
+            }
+        });
+    }
+
+    public void findTaskByPlainTextAndName(final int lineNumber, final String taskText, final IFindTaskResult callback) {
+        getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
+            @Override
+            public void OnSuccess(Tasks result, int title) {
+                synchronized (result) {
+                    final Task foundTask = result.findByPlaintextAndLine(taskText, lineNumber);
+                    callback.OnSuccess(foundTask);
+                }
+            }
+
+            @Override
+            public void OnFailure(String result) {
+                callback.OnFailure(result);
+            }
+        });
+    }
+
+    public void setTaskDone(final int lineNumber, final String taskText) {
+        getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
+            @Override
+            public void OnSuccess(Tasks result, int title) {
+                synchronized (result) {
+                    final Task foundTask = result.findByPlaintextAndLine(taskText, lineNumber);
+                    if (null != foundTask) {
+                        if (foundTask.isCompleted() == false) {
+                            foundTask.setCompleted(true);
+                            foundTask.getParent().taskListChanged();
+                        }
+                    }
+                }
+            }
+
+
+            @Override
+            public void OnFailure(String result) {
+
+            }
+        });
+    }
+
     public enum TaskListTypes {
         MainList,
         ArchivedList
+    }
+
+
+    public interface IFindTaskResult {
+        public void OnSuccess(final Task task);
+
+        public void OnFailure(String error);
     }
 
 
