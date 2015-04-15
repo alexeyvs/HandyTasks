@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,13 +15,9 @@ import android.widget.RadioButton;
 import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.impl.Dropbox.DbAPI;
 import com.handytasks.handytasks.impl.ErrorReporter;
-import com.handytasks.handytasks.impl.GoogleDrive.GDFS;
 import com.handytasks.handytasks.impl.HTApplication;
-import com.handytasks.handytasks.interfaces.IAsyncResult;
 import com.handytasks.handytasks.interfaces.ICloudAPI;
-import com.handytasks.handytasks.interfaces.ICloudFile;
 import com.handytasks.handytasks.interfaces.IInitAPI;
-import com.handytasks.handytasks.interfaces.IOpenFileResult;
 
 public class InitCloud extends BaseActivity {
     public static final int REQUEST_CODE_INIT_CLOUD = 1;
@@ -68,7 +63,7 @@ public class InitCloud extends BaseActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setTitle("Warning")
-                .setMessage("Google Drive sync are not always happen immediately when your todo list changes somewhere outside this application. To force sync use 'Sync now' menu item in task list.")
+                .setMessage(getString(R.string.google_drive_warning))
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setNeutralButton("OK", new DialogInterface.OnClickListener() {
                     @Override
@@ -81,65 +76,67 @@ public class InitCloud extends BaseActivity {
         alert.show();
     }
 
-    public void onTest(View view) {
-        m_CloudAPI = ((HTApplication) getApplication()).getCloudAPI();
-        if (null == m_CloudAPI) {
-            ((HTApplication) getApplication()).generateAPI(this, getApplicationContext(), new IInitAPI() {
-                @Override
-                public void OnSuccess(ICloudAPI result) {
-                    m_CloudAPI = result;
-                    ((HTApplication) getApplication()).setAPI(result);
-                    m_CloudAPI.getFS().initializeFS(new IAsyncResult() {
-                        @Override
-                        public void OnSuccess(String result) {
-                            try {
-                                m_CloudAPI.getFS().CreateTextFile("todo.txt", new IOpenFileResult() {
-                                    @Override
-                                    public void OnSuccess(ICloudFile result) {
-                                        m_CloudAPI.getFS().ReadTextFile(result, true, new IAsyncResult() {
-                                            @Override
-                                            public void OnSuccess(String result) {
-                                                Log.d(TAG, result);
-                                            }
-
-                                            @Override
-                                            public void OnFailure(String result) {
-
-                                            }
-                                        });
-                                    }
-
-                                    @Override
-                                    public void OnFailure(String result) {
-
-                                    }
-                                });
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-
-                        @Override
-                        public void OnFailure(String result) {
-
-                        }
-                    });
-                }
-
-                @Override
-                public void OnActionRequired(Object action) {
-
-                }
-
-                @Override
-                public void OnFailure(Object result) {
-                    Log.e(TAG, result.toString());
-                    ErrorReporter.ReportError(GDFS.class, InitCloud.this, result);
-                }
-            }, true);
-        }
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void onTest(View view) {
+//        m_CloudAPI = ((HTApplication) getApplication()).getCloudAPI();
+//        if (null == m_CloudAPI) {
+//            ((HTApplication) getApplication()).generateAPI(this, getApplicationContext(), new IInitAPI() {
+//                @Override
+//                public void OnSuccess(ICloudAPI result) {
+//                    m_CloudAPI = result;
+//                    ((HTApplication) getApplication()).setAPI(result);
+//                    m_CloudAPI.getFS().initializeFS(new IAsyncResult() {
+//                        @Override
+//                        public void OnSuccess(String result) {
+//                            try {
+//                                m_CloudAPI.getFS().CreateTextFile("todo.txt", new IOpenFileResult() {
+//                                    @Override
+//                                    public void OnSuccess(ICloudFile result) {
+//                                        m_CloudAPI.getFS().ReadTextFile(result, true, new IAsyncResult() {
+//                                            @Override
+//                                            public void OnSuccess(String result) {
+//                                                Log.d(TAG, result);
+//                                            }
+//
+//                                            @Override
+//                                            public void OnFailure(String result) {
+//
+//                                            }
+//                                        });
+//                                    }
+//
+//                                    @Override
+//                                    public void OnFailure(String result) {
+//
+//                                    }
+//                                });
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//
+//                        }
+//
+//                        @Override
+//                        public void OnFailure(String result) {
+//
+//                        }
+//                    });
+//                }
+//
+//                @Override
+//                public void OnActionRequired(Object action) {
+//
+//                }
+//
+//                @Override
+//                public void OnFailure(Object result) {
+//                    Log.e(TAG, result.toString());
+//                    ErrorReporter.ReportError(GDFS.class, InitCloud.this, result);
+//                }
+//            }, true);
+//        }
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     void startInitCloud() {
         m_CloudAPI = ((HTApplication) getApplication()).getCloudAPI();
@@ -213,7 +210,7 @@ public class InitCloud extends BaseActivity {
                     }
                 });
             } else {
-                ErrorReporter.ReportError(this.getClass(), InitCloud.this, "Connection setup canceled");
+                ErrorReporter.ReportError(this.getClass(), InitCloud.this, getString(R.string.connection_setup_canceled));
             }
         }
     }

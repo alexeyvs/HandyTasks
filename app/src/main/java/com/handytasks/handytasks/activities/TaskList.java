@@ -16,7 +16,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,8 +44,8 @@ import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.undo.Simple
 
 public class TaskList extends BaseActivity {
     private static final String TAG = "TaskList activity";
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
-    Messenger mService = null;
+    private final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private Messenger mService = null;
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
@@ -64,7 +63,7 @@ public class TaskList extends BaseActivity {
             mService = null;
         }
     };
-    boolean mIsBound;
+    private boolean mIsBound;
     private Tasks mTasks;
     private TasksAdapter mAdapter;
     private TaskTypes.TaskListTypes mType;
@@ -133,7 +132,7 @@ public class TaskList extends BaseActivity {
 
     private void initTasks(boolean force) {
         final ProgressDialog loadingProgress = new ProgressDialog(this);
-        loadingProgress.setTitle("Loading tasks...");
+        loadingProgress.setTitle(getString(R.string.loading_tasks));
         loadingProgress.show();
 
         getTaskTypes().getTasks(force, mType, new ICreateTasksResult() {
@@ -172,7 +171,7 @@ public class TaskList extends BaseActivity {
                         Intent intent = getIntent();
                         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                             mAdapter.setFilter(intent.getStringExtra(SearchManager.QUERY));
-                            setTitle("Search results");
+                            setTitle(getString(R.string.search_results));
                         }
 
                         // edit task
@@ -226,17 +225,17 @@ public class TaskList extends BaseActivity {
     void HandleError(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
-                .setTitle("Failed to initialize cloud connection")
-                .setMessage("Error details: " + message + "Try again?")
+                .setTitle(getString(R.string.failed_to_initialize_cloud_connection))
+                .setMessage(getString(R.string.error_details) + message + getString(R.string.try_again_question))
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton("Yes",
+                .setPositiveButton(getString(R.string.yes),
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 initTasks(false);
                             }
                         }
                 );
-        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
                 finish();
@@ -367,7 +366,7 @@ public class TaskList extends BaseActivity {
                         mTasks.Read(new IAsyncResult() {
                             @Override
                             public void OnSuccess(String result) {
-                                new Toast(getApplicationContext()).makeText(getApplicationContext(), "Sync requested", Toast.LENGTH_LONG).show();
+                                new Toast(getApplicationContext()).makeText(getApplicationContext(), getString(R.string.sync_requested), Toast.LENGTH_LONG).show();
                             }
 
                             @Override
@@ -379,7 +378,7 @@ public class TaskList extends BaseActivity {
 
                     @Override
                     public void OnFailure(String result) {
-                        new Toast(getApplicationContext()).makeText(getApplicationContext(), "Failed to sync: " + result, Toast.LENGTH_LONG).show();
+                        new Toast(getApplicationContext()).makeText(getApplicationContext(), getString(R.string.failed_to_sync) + result, Toast.LENGTH_LONG).show();
                     }
                 });
                 return true;
@@ -431,7 +430,7 @@ public class TaskList extends BaseActivity {
         }
     }
 
-    class IncomingHandler extends Handler {
+    private class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -479,8 +478,10 @@ public class TaskList extends BaseActivity {
 
         private final TasksAdapter mAdapter;
 
-        @Nullable
-        private Toast mToast;
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//        @Nullable
+//        private Toast mToast;
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
         MyOnDismissCallback(final TasksAdapter adapter) {
             mAdapter = adapter;

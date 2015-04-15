@@ -9,7 +9,6 @@ import com.handytasks.handytasks.interfaces.IAsyncResult;
 import com.handytasks.handytasks.interfaces.ICloudAPI;
 import com.handytasks.handytasks.interfaces.ICloudFS;
 import com.handytasks.handytasks.interfaces.ICloudFSStorage;
-import com.handytasks.handytasks.interfaces.ICloudWatcher;
 import com.handytasks.handytasks.interfaces.IInitAPI;
 import com.handytasks.handytasks.model.TaskTypes;
 
@@ -30,10 +29,10 @@ import org.acra.sender.HttpSender;
 )
 public class HTApplication extends Application implements ICloudFSStorage {
 
-    public static final int OPEN_TASK = 333;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):public static final int OPEN_TASK = 333;
     private final TaskTypes mTaskTypes = new TaskTypes(this);
     private ICloudAPI m_CloudAPI;
-    private ICloudWatcher m_CloudWatcher;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private ICloudWatcher m_CloudWatcher;
     private boolean mConnectionSetupInProgress;
 
     public void setAPI(ICloudAPI api) {
@@ -74,12 +73,12 @@ public class HTApplication extends Application implements ICloudFSStorage {
         return m_CloudAPI.getFS();
     }
 
-    @Override
-    public ICloudFS setFS(ICloudFS fs) {
-        m_CloudAPI.setFS(fs);
-        return fs;
-    }
-
+    /* @Override
+     public ICloudFS setFS(ICloudFS fs) {
+         m_CloudAPI.setFS(fs);
+         return fs;
+     }
+ */
     public TaskTypes getTaskTypes() {
         return mTaskTypes;
     }

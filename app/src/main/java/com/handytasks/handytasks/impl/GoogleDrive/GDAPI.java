@@ -12,6 +12,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
+import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.interfaces.IAsyncResult;
 import com.handytasks.handytasks.interfaces.ICloudAPI;
 import com.handytasks.handytasks.interfaces.ICloudFS;
@@ -27,13 +28,12 @@ public class GDAPI implements ICloudAPI, GoogleApiClient.ConnectionCallbacks {
     private static final int REQUEST_CODE_RESOLUTION = 4;
     private final GoogleApiClient m_GoogleApiClient;
     private final ContextWrapper mActivity;
-    private final Context mContext;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private final Context mContext;
     private boolean m_Ready = false;
     private GDFS m_FS;
     private IInitAPI mConnectionCallback;
 
     public GDAPI(ContextWrapper activity, Context context, final IInitAPI callback, final boolean allowStartOfNewActivities) {
-        mContext = context;
         mConnectionCallback = callback;
         mActivity = activity;
         m_GoogleApiClient = new GoogleApiClient.Builder(context)
@@ -53,7 +53,7 @@ public class GDAPI implements ICloudAPI, GoogleApiClient.ConnectionCallbacks {
                                 connectionResult.startResolutionForResult((Activity) mActivity, REQUEST_CODE_RESOLUTION);
                                 callback.OnActionRequired(GDAPI.this);
                             } else {
-                                callback.OnFailure("Failed to resolve connection issue");
+                                callback.OnFailure(mActivity.getString(R.string.failed_to_resolve_connection_issue));
                             }
 
                         } catch (IntentSender.SendIntentException e) {
@@ -69,12 +69,6 @@ public class GDAPI implements ICloudAPI, GoogleApiClient.ConnectionCallbacks {
 
     @Override
     public ICloudFS getFS() {
-        return m_FS;
-    }
-
-    @Override
-    public ICloudFS setFS(ICloudFS fs) {
-        m_FS = (GDFS) fs;
         return m_FS;
     }
 

@@ -30,7 +30,7 @@ public class Tasks implements IFSChangeHandler {
     private final TaskTypes.TaskListTypes mType;
     private final ArrayList<Task> mTasksArray = new ArrayList<>();
     private final ArrayList<ITaskListChanged> mTaskListChangedHandlers;
-    ScheduledFuture<?> mLastScheduledStartWatchForChanges;
+    private ScheduledFuture<?> mLastScheduledStartWatchForChanges;
     private ICloudFile mCloudFile;
     private Lock mLock = new ReentrantLock(true);
     private Boolean mGoingToWrite = false;
@@ -195,29 +195,31 @@ public class Tasks implements IFSChangeHandler {
     }
 
 
-    // use X seconds delay and buffer all the writes to decrease server overhead
-    public void Write1() {
-        final int delayBeforeWrite = 3;
-        Log.d(TAG, "Writing file " + mCloudFile.getFilename());
-        if (false == mGoingToWrite) {
-            mGoingToWrite = true;
-            Log.d(TAG, String.format("Writing of file %s scheduled with %d seconds delay", mCloudFile.getFilename(), delayBeforeWrite));
-            mScheduledPool.schedule(mWriteFileTask, delayBeforeWrite, TimeUnit.SECONDS);
-        } else {
-            Log.d(TAG, "Writing already scheduled");
-        }
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    // use X seconds delay and buffer all the writes to decrease server overhead
+//    public void Write1() {
+//        final int delayBeforeWrite = 3;
+//        Log.d(TAG, "Writing file " + mCloudFile.getFilename());
+//        if (false == mGoingToWrite) {
+//            mGoingToWrite = true;
+//            Log.d(TAG, String.format("Writing of file %s scheduled with %d seconds delay", mCloudFile.getFilename(), delayBeforeWrite));
+//            mScheduledPool.schedule(mWriteFileTask, delayBeforeWrite, TimeUnit.SECONDS);
+//        } else {
+//            Log.d(TAG, "Writing already scheduled");
+//        }
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
 
     public ArrayList<Task> getList() {
         return mTasksArray;
     }
 
-    public void startWatchForChanges() {
+    void startWatchForChanges() {
         mCloudFS.getWatcher(mCloudFile).StartWatch(this);
     }
 
-    public void stopWatchForChanges() {
+    void stopWatchForChanges() {
         mCloudFS.getWatcher(mCloudFile).StopWatch();
     }
 

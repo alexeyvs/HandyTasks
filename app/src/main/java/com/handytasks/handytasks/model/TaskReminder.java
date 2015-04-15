@@ -23,7 +23,9 @@ public class TaskReminder {
         Pattern locationPattern = Pattern.compile(ReminderParams.LOCATION_FORMAT);
         Matcher locationMatcher = locationPattern.matcher(reminderParams);
         if (locationMatcher.matches()) {
-            mReminderParams = new ReminderParams(locationMatcher.group(1), Double.parseDouble(locationMatcher.group(2)), Double.parseDouble(locationMatcher.group(3)));
+            mReminderParams = new ReminderParams(locationMatcher.group(1),
+                    Double.parseDouble(locationMatcher.group(2).replace(',', '.')),
+                    Double.parseDouble(locationMatcher.group(3).replace(',', '.')));
             mReminderType = ReminderType.Location;
             return;
         } else {
@@ -55,23 +57,29 @@ public class TaskReminder {
         return mReminderType;
     }
 
-    public void setType(ReminderType type) {
-        mReminderType = type;
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void setType(ReminderType type) {
+//        mReminderType = type;
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     public ReminderParams getParams() {
         return mReminderParams;
     }
 
-    public void setParams(ReminderParams params) {
-        mReminderParams = params;
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void setParams(ReminderParams params) {
+//        mReminderParams = params;
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
-    public void setTimedReminder(String strDate) throws ParseException {
-        mReminderType = ReminderType.Timed;
-        SimpleDateFormat parserSDF = new SimpleDateFormat(ReminderParams.DATE_FORMAT);
-        mReminderParams = new ReminderParams(parserSDF.parse(strDate));
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void setTimedReminder(String strDate) throws ParseException {
+//        mReminderType = ReminderType.Timed;
+//        SimpleDateFormat parserSDF = new SimpleDateFormat(ReminderParams.DATE_FORMAT);
+//        mReminderParams = new ReminderParams(parserSDF.parse(strDate));
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     public enum ReminderType {
         Timed,

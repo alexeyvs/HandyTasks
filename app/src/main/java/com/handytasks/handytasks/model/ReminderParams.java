@@ -1,6 +1,7 @@
 package com.handytasks.handytasks.model;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.text.format.DateUtils;
 
 import com.google.android.gms.location.places.Place;
@@ -69,11 +70,11 @@ public class ReminderParams {
         signalUpdate();
     }
 
-    public String getPlaceInfo() {
-        return mLocation.getPlaceInfo();
+    public String getPlaceInfo(ContextWrapper context) {
+        return mLocation.getPlaceInfo(context);
     }
 
-    public void setPlace(String name, Double latitude, Double longitude) {
+    void setPlace(String name, Double latitude, Double longitude) {
         mLocation.setPlace(name, latitude, longitude);
         signalUpdate();
     }

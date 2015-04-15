@@ -25,7 +25,7 @@ import java.util.Hashtable;
  */
 public class DbFS extends ACloudAPIHolder implements ICloudFS {
     private DbxFileSystem m_DbFS;
-    private ICloudWatcher m_dbWatcher;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private ICloudWatcher m_dbWatcher;
     private Hashtable<ICloudFile, ICloudWatcher> mWatchers = new Hashtable<ICloudFile, ICloudWatcher>();
 
 
@@ -162,6 +162,11 @@ public class DbFS extends ACloudAPIHolder implements ICloudFS {
             }
             return Result;
         }
+    }
+
+    @Override
+    public ICloudAPI getAPI() {
+        return mAPI;
     }
 
     public void addPathListener(DbxFileSystem.PathListener pathListener, DbxPath dbxPath) {

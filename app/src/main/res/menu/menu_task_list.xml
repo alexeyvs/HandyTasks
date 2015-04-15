@@ -7,7 +7,7 @@
         android:actionViewClass="android.widget.SearchView"
         android:icon="@android:drawable/ic_menu_search"
         android:showAsAction="ifRoom|collapseActionView"
-        android:title="Search" />
+        android:title="@string/search" />
 
     <item
         android:id="@+id/action_create_task"
@@ -40,16 +40,16 @@
         <menu>
             <item
                 android:id="@+id/action_sort_az"
-                android:title="Text A-Z" />
+                android:title="@string/text_az" />
             <item
                 android:id="@+id/action_sort_za"
-                android:title="Text Z-A" />
+                android:title="@string/text_za" />
             <item
                 android:id="@+id/action_sort_incomplete_az"
-                android:title="Unfinished, Text A-Z" />
+                android:title="@string/unfinished_text_az" />
             <item
                 android:id="@+id/action_sort_incomplete_za"
-                android:title="Unfinished, Text Z-A" />
+                android:title="@string/unfinished_text_za" />
         </menu>
     </item>
 

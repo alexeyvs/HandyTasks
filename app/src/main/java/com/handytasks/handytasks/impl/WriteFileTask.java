@@ -5,7 +5,7 @@ import android.os.AsyncTask;
 import com.handytasks.handytasks.interfaces.IAsyncResult;
 
 public class WriteFileTask extends AsyncTask<FileTaskParams, Void, Object> {
-    private static final String TAG = "DbFS.WriteFileTask";
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private static final String TAG = "DbFS.WriteFileTask";
     private IAsyncResult m_Callback;
 
     @Override

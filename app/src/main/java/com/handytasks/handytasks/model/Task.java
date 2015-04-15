@@ -1,9 +1,11 @@
 package com.handytasks.handytasks.model;
 
 import android.app.NotificationManager;
+import android.content.ContextWrapper;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.controls.TasksAdapter;
 
 import java.text.ParseException;
@@ -26,7 +28,7 @@ public class Task implements Parcelable {
         }
     };
 
-    private static final String TAG = "Task";
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private static final String TAG = "Task";
     private final long mId;
     private NotificationManager mNotificationManager;
     private Tasks m_Parent;
@@ -35,7 +37,7 @@ public class Task implements Parcelable {
     private TasksAdapter m_Adapter;
     private TaskTypes.TaskListTypes mType;
     private TaskReminder mReminder;
-    private CharSequence notificationTitle;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private CharSequence notificationTitle;
 
     private Task(Parcel in) {
         mId = new Random().nextLong();
@@ -163,11 +165,11 @@ public class Task implements Parcelable {
         return getTaskText().replaceFirst("^\\s*[+]\\s*", "").replaceAll("remind:\\[(.*)\\]", "");
     }
 
-    public TaskTypes.TaskListTypes getType() {
+    TaskTypes.TaskListTypes getType() {
         return mType;
     }
 
-    public void setType(TaskTypes.TaskListTypes type) {
+    void setType(TaskTypes.TaskListTypes type) {
         mType = type;
     }
 
@@ -214,17 +216,17 @@ public class Task implements Parcelable {
         }
     }
 
-    public String getNotificationTitle() {
+    public String getNotificationTitle(final ContextWrapper context) {
         TaskReminder reminder = getReminder();
         if (null == reminder) {
             return "";
         }
 
         if (reminder.getType() == TaskReminder.ReminderType.Timed) {
-            return "Time for task";
+            return context.getString(R.string.time_for_task);
         }
         if (reminder.getType() == TaskReminder.ReminderType.Location) {
-            return "You are near location";
+            return context.getString(R.string.you_are_near_location);
         }
         return "";
     }

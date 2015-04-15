@@ -23,14 +23,18 @@ import java.util.Date;
  * create an instance of this fragment.
  */
 public class DateTimePicker extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    // TODO: Rename parameter arguments, choose names that match
+//    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+//    private static final String ARG_PARAM1 = "param1";
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    // TODO: Rename and change types of parameters
+//    private String mParam1;
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private String mParam2;
 
     private IDateTimePicked mListener;
 
@@ -38,10 +42,12 @@ public class DateTimePicker extends Fragment {
         // Required empty public constructor
     }
 
-    public static DateTimePicker newInstance() {
-        DateTimePicker fragment = new DateTimePicker();
-        return fragment;
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public static DateTimePicker newInstance() {
+//        DateTimePicker fragment = new DateTimePicker();
+//        return fragment;
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,7 +69,7 @@ public class DateTimePicker extends Fragment {
         return view;
     }
 
-    public void onSet(View view) {
+    void onSet(View view) {
         if (mListener != null) {
             Calendar cal = Calendar.getInstance();
             DatePicker datePicker = ((DatePicker) getView().findViewById(R.id.date_picker));

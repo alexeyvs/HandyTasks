@@ -16,4 +16,5 @@ public abstract class ACloudAPIHolder {
     public void setAPI(ICloudAPI api) {
         mAPI = api;
     }
+
 }

@@ -20,12 +20,11 @@ public class DbAPI implements ICloudAPI {
     private final DbxAccountManager m_DbxAcctMgr;
     private final String APP_KEY = "0f8doa1bhogj84t";
     private final String APP_SECRET = "um6onx22mk7g10l";
-    private final Context mContext;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private final Context mContext;
     private ICloudFS m_CloudFS;
     private boolean m_isReady = false;
 
     public DbAPI(ContextWrapper activity, Context context, IInitAPI callback, boolean allowStartOfNewActivities) {
-        mContext = context;
         m_DbxAcctMgr = DbxAccountManager.getInstance(context, APP_KEY, APP_SECRET);
         if (!m_DbxAcctMgr.hasLinkedAccount()) {
             if (allowStartOfNewActivities) {
@@ -42,12 +41,6 @@ public class DbAPI implements ICloudAPI {
 
     @Override
     public ICloudFS getFS() {
-        return m_CloudFS;
-    }
-
-    @Override
-    public ICloudFS setFS(ICloudFS fs) {
-        m_CloudFS = fs;
         return m_CloudFS;
     }
 

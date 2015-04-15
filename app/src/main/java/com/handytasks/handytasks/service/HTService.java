@@ -17,10 +17,10 @@ public class HTService extends Service {
     public static final int MSG_SET_INT_VALUE = 3;
     public static final int MSG_SET_STRING_VALUE = 4;
     private static boolean mRunning = false;
-    final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
+    private final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
     private final HTServiceWorker mWorker;
-    ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
-    int mValue = 0; // Holds last value set by a client.
+    private ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
+    // --Commented out by Inspection (4/15/2015 11:24 PM):int mValue = 0; // Holds last value set by a client.
 
     public HTService() {
         mWorker = new HTServiceWorker(this);
@@ -77,7 +77,7 @@ public class HTService extends Service {
         return mMessenger.getBinder();
     }
 
-    class IncomingHandler extends Handler { // Handler of incoming messages from clients.
+    private class IncomingHandler extends Handler { // Handler of incoming messages from clients.
 
         @Override
         public void handleMessage(Message msg) {

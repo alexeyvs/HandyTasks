@@ -5,11 +5,11 @@
             android:id="@+id/reminder_type_timed"
             android:orderInCategory="100"
             android:showAsAction="never"
-            android:title="On time" />
+            android:title="@string/on_time" />
         <item
             android:id="@+id/reminder_type_location"
             android:orderInCategory="100"
             android:showAsAction="never"
-            android:title="On location" />
+            android:title="@string/on_location" />
     </group>
 </menu>

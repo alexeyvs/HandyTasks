@@ -3,7 +3,6 @@ package com.handytasks.handytasks.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
@@ -49,9 +48,9 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     public static final int ACTION_EDIT = 1;
     public static final int ACTION_DELETE = 2;
     public static final int ACTION_ARCHIVE = 3;
-    public static final int PLACE_PICKER_REQUEST = 1;
-    public static final String DATEPICKER_TAG = "datepicker";
-    public static final String TIMEPICKER_TAG = "timepicker";
+    private static final int PLACE_PICKER_REQUEST = 1;
+    private static final String DATEPICKER_TAG = "datepicker";
+    private static final String TIMEPICKER_TAG = "timepicker";
     private static final String TAG = "TaskView activity";
     private final static int TIME_INTERVALS_MENU_ID_START = 100;
     private int mRequestCode;
@@ -203,15 +202,15 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     private void initReminderControls() {
         if (mReminderType == TaskReminder.ReminderType.Timed) {
-            mReminderTypeSelect.setText("Remind on time");
+            mReminderTypeSelect.setText(getString(R.string.remind_on_time));
             ((LinearLayout) findViewById(R.id.timed_params)).setVisibility(View.VISIBLE);
             ((LinearLayout) findViewById(R.id.location_params)).setVisibility(View.GONE);
 
             // set dates
             if (isToday(mReminderParams.getTriggerDate())) {
-                mDateSelector.setText("Today");
+                mDateSelector.setText(getString(R.string.today));
             } else if (isTomorrow(mReminderParams.getTriggerDate())) {
-                mDateSelector.setText("Tomorrow");
+                mDateSelector.setText(getString(R.string.tomorrow));
             } else {
                 mDateSelector.setText(mReminderParams.getTriggerDateUFString(getApplicationContext(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NUMERIC_DATE));
             }
@@ -224,10 +223,10 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             mTimeSelector.setText(timeCaption);
 
         } else if (mReminderType == TaskReminder.ReminderType.Location) {
-            mReminderTypeSelect.setText("Remind near location");
+            mReminderTypeSelect.setText(getString(R.string.remind_near_location));
             ((LinearLayout) findViewById(R.id.timed_params)).setVisibility(View.GONE);
             ((LinearLayout) findViewById(R.id.location_params)).setVisibility(View.VISIBLE);
-            mLocationSelector.setText(mReminderParams.getPlaceInfo());
+            mLocationSelector.setText(mReminderParams.getPlaceInfo(this));
         }
     }
 
@@ -262,7 +261,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     }
 
     private void setToday() {
-        mDateSelector.setText("Today");
+        mDateSelector.setText(getString(R.string.today));
         Calendar c = Calendar.getInstance(),
                 cNow = Calendar.getInstance();
         c.setTime(mReminderParams.getTriggerDate());
@@ -284,7 +283,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     }
 
     private void setTomorrow() {
-        mDateSelector.setText("Tomorrow");
+        mDateSelector.setText(getString(R.string.tomorrow));
         Calendar c = Calendar.getInstance(),
                 cNow = Calendar.getInstance();
         c.setTime(mReminderParams.getTriggerDate());
@@ -334,7 +333,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                 break;
             case R.id.reminder_type_location:
                 if (mReminderType != TaskReminder.ReminderType.Location) {
-                    mReminderParams = new ReminderParams(ReminderLocationData.getDefault());
+                    mReminderParams = new ReminderParams(ReminderLocationData.getDefault(this));
                     mReminderParams.setChangesHandler(this);
                 }
                 mReminderType = TaskReminder.ReminderType.Location;
@@ -389,13 +388,15 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         overridePendingTransition(R.anim.in, R.anim.out);
     }
 
-    public void setUnderline(TextView textView, boolean underline) {
-        if (underline) {
-            textView.setPaintFlags(textView.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-        } else {
-            textView.setPaintFlags(textView.getPaintFlags() & (~Paint.UNDERLINE_TEXT_FLAG));
-        }
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void setUnderline(TextView textView, boolean underline) {
+//        if (underline) {
+//            textView.setPaintFlags(textView.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+//        } else {
+//            textView.setPaintFlags(textView.getPaintFlags() & (~Paint.UNDERLINE_TEXT_FLAG));
+//        }
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     public void onPickLocation(View view) {
         PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
@@ -415,9 +416,9 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
                 Place place = PlacePicker.getPlace(data, this);
                 mReminderParams.setPlace(place);
-                String toastMsg = String.format("Place: %s", place.getName());
+                String toastMsg = String.format(getString(R.string.place_selected_toast), place.getName());
                 Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
-                mLocationSelector.setText(mReminderParams.getPlaceInfo());
+                mLocationSelector.setText(mReminderParams.getPlaceInfo(this));
                 return;
             }
         }
@@ -480,7 +481,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                         break;
                     case R.id.reminder_type_location:
                         if (mReminderType != TaskReminder.ReminderType.Location) {
-                            mReminderParams = new ReminderParams(ReminderLocationData.getDefault());
+                            mReminderParams = new ReminderParams(ReminderLocationData.getDefault(TaskView.this));
                             mReminderParams.setChangesHandler(TaskView.this);
                         }
                         mReminderType = TaskReminder.ReminderType.Location;
@@ -514,15 +515,17 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         // view.showContextMenu();
     }
 
-    public void setTimedReminder(View view) {
-        final Calendar calendar = Calendar.getInstance();
-        final DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(this, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), true);
-        datePickerDialog.setVibrate(true);
-        datePickerDialog.setYearRange(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR) + 10);
-        datePickerDialog.setCloseOnSingleTapDay(true);
-        datePickerDialog.show(getSupportFragmentManager(), DATEPICKER_TAG);
-
-    }
+// --Commented out by Inspection START (4/15/2015 11:24 PM):
+//    public void setTimedReminder(View view) {
+//        final Calendar calendar = Calendar.getInstance();
+//        final DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(this, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), true);
+//        datePickerDialog.setVibrate(true);
+//        datePickerDialog.setYearRange(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR) + 10);
+//        datePickerDialog.setCloseOnSingleTapDay(true);
+//        datePickerDialog.show(getSupportFragmentManager(), DATEPICKER_TAG);
+//
+//    }
+// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
 
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int year, int month, int day) {

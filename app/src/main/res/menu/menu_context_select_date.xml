@@ -4,15 +4,15 @@
         android:id="@+id/action_select_today"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="Today" />
+        android:title="@string/today" />
     <item
         android:id="@+id/action_select_tomorrow"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="Tomorrow" />
+        android:title="@string/tomorrow" />
     <item
         android:id="@+id/action_select_pick_date"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="Pick date..." />
+        android:title="@string/pick_date" />
 </menu>

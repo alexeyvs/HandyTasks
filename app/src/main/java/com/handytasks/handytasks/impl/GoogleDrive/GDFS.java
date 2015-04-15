@@ -55,7 +55,7 @@ public class GDFS extends ACloudAPIHolder implements ICloudFS {
                 }
             };
     private IAsyncResult mInitializeFSCallback;
-    private IAsyncResult mReadFileCallback;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private IAsyncResult mReadFileCallback;
     private Hashtable<ICloudFile, ICloudWatcher> mWatchers = new Hashtable<ICloudFile, ICloudWatcher>();
 
     public GDFS(ICloudAPI api) {

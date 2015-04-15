@@ -6,5 +6,5 @@ package com.handytasks.handytasks.interfaces;
 public interface ICloudFSStorage {
     public ICloudFS getFS();
 
-    public ICloudFS setFS(ICloudFS fs);
+    // --Commented out by Inspection (4/15/2015 11:24 PM):public ICloudFS setFS(ICloudFS fs);
 }

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="General">
+    <PreferenceCategory android:title="@string/general">
         <Preference
-            android:summary="Allows to select cloud provider to store your tasks. If you change currently selected provider tasks stored will not be preserved in program, but will appear again if you switch back to old provider."
-            android:title="Select cloud provider">
+            android:summary="@string/cloud_provider_selection_summary"
+            android:title="@string/cloud_provider_selection_title">
             <intent
                 android:targetClass="com.handytasks.handytasks.activities.InitCloud"
                 android:targetPackage="com.handytasks.handytasks" />
@@ -13,28 +13,28 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="auto_archive_completed"
-            android:summary="Whether or not completed tasks should be moved to archive.txt"
-            android:title="Auto archive" />
+            android:summary="@string/auto_archive_summary"
+            android:title="@string/auto_archive_title" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Appearance">
+    <PreferenceCategory android:title="@string/appearance">
         <ListPreference
             android:defaultValue="HandyTasksTheme"
             android:entries="@array/themeCaptions"
             android:entryValues="@array/themeValues"
             android:key="theme"
-            android:title="Theme" />
+            android:title="@string/theme_title" />
 
         <ListPreference
             android:entries="@array/fontSizeCaptions"
             android:entryValues="@array/fontSizeValues"
             android:key="task_list_font_size"
-            android:title="Task list font size" />
+            android:title="@string/task_list_font_size" />
     </PreferenceCategory>
 
 
-    <PreferenceCategory android:title="Notifications">
+    <PreferenceCategory android:title="@string/notifications">
 
         <CheckBoxPreference
             android:defaultValue="true"
@@ -46,8 +46,8 @@
             android:entries="@array/proximityCaptions"
             android:entryValues="@array/proximityValues"
             android:key="proximity_distance"
-            android:summary="Select proximity radius for location based reminders in meters"
-            android:title="Location proximity" />
+            android:summary="@string/location_proximity_summary"
+            android:title="@string/location_proximity_title" />
 
 
         <!-- Allows the user to choose a ringtone in the 'notification' category. -->

@@ -85,7 +85,7 @@ public class TaskTypes {
                 Log.d(TAG, String.format("Archiving task %s line number %d", task.getTaskText(), task.getLineNumber()));
                 result.Add(new Task(task).setCompleted(true));
                 mainList.deleteTask(task);
-                new Toast(context).makeText(context, String.format("Task \"%s\" archived", task.getTaskPlainText()), Toast.LENGTH_LONG).show();
+                new Toast(context).makeText(context, String.format(context.getString(R.string.task_archived_toast), task.getTaskPlainText()), Toast.LENGTH_LONG).show();
                 if (null != callback) callback.OnSuccess(null);
             }
 

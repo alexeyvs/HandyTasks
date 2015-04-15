@@ -8,7 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class ReadFileTask extends AsyncTask<FileTaskParams, Void, Object> {
-    private static final String TAG = "DbFS.ReadFileTask";
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private static final String TAG = "DbFS.ReadFileTask";
     private static final int GET_LATEST_VERSION_TIMEOUT = 10;
     private IAsyncResult m_Callback;
 

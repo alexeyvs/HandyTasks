@@ -59,7 +59,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     private Hashtable<Task, ScheduledFuture<?>> mSchedules = new Hashtable<>();
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest mLocationRequest;
-    private Location mLastKnownLocation;
+    // --Commented out by Inspection (4/15/2015 11:24 PM):private Location mLastKnownLocation;
     private ITaskListChanged mTaskListChangedHandler = new ITaskListChanged() {
         @Override
         public void TaskListChanged(Tasks tasks) {
@@ -119,14 +119,14 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 @Override
                 public void OnSuccess(Task task) {
                     new Toast(mService.getApplicationContext())
-                            .makeText(mService.getApplicationContext(), "Task created: " + task.getTaskPlainText(), Toast.LENGTH_LONG)
+                            .makeText(mService.getApplicationContext(), mService.getString(R.string.task_created) + task.getTaskPlainText(), Toast.LENGTH_LONG)
                             .show();
                 }
 
                 @Override
                 public void OnFailure(String error) {
                     new Toast(mService.getApplicationContext())
-                            .makeText(mService.getApplicationContext(), "Failed to create task: " + error, Toast.LENGTH_LONG)
+                            .makeText(mService.getApplicationContext(), mService.getString(R.string.failed_to_create_task) + error, Toast.LENGTH_LONG)
                             .show();
                 }
             });
@@ -139,7 +139,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(mService.getApplicationContext())
-                        .setContentTitle(task.getNotificationTitle())
+                        .setContentTitle(task.getNotificationTitle(mService))
                         .setContentText(task.getTaskPlainText())
                         .setAutoCancel(true);
 
@@ -148,14 +148,14 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         dismissIntent.putExtra("task_text", task.getTaskPlainText());
         dismissIntent.putExtra("task_linenumber", task.getLineNumber());
         PendingIntent pendingDismissIntent = PendingIntent.getService(mService, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.addAction(R.drawable.ic_dismiss, "Dismiss", pendingDismissIntent);
+        mBuilder.addAction(R.drawable.ic_dismiss, mService.getString(R.string.dismiss), pendingDismissIntent);
 
         Intent doneIntent = new Intent(mService, HTService.class);
         doneIntent.setAction("com.handytasks.handytasks.action.DONE");
         doneIntent.putExtra("task_text", task.getTaskPlainText());
         doneIntent.putExtra("task_linenumber", task.getLineNumber());
         PendingIntent pendingDoneIntent = PendingIntent.getService(mService, 0, doneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.addAction(R.drawable.ic_check, "Done", pendingDoneIntent);
+        mBuilder.addAction(R.drawable.ic_check, mService.getString(R.string.done), pendingDoneIntent);
 
 
         switch (notificationType) {
@@ -252,13 +252,11 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     private void remind(Task task) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
         if (true == prefs.getBoolean("reminder_notify", true)) {
-            String title;
+
             NotificationType notificationType;
             if (task.getReminder().getType() == TaskReminder.ReminderType.Location) {
-                title = "You are near location";
                 notificationType = NotificationType.LocationReminder;
             } else {
-                title = "Time for task";
                 notificationType = NotificationType.TimedReminder;
             }
             Log.d(TAG, "Reminder for task " + task.getTaskPlainText() + " sent");
@@ -380,7 +378,6 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, mLocationRequest, new LocationListener() {
             @Override
             public void onLocationChanged(final Location location) {
-                mLastKnownLocation = location;
                 if (((HTApplication) mService.getApplication()).isAPIInitialized()) {
 
                     ((HTApplication) mService.getApplication()).getTaskTypes().getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
@@ -445,6 +442,6 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     private enum NotificationType {
         TimedReminder,
         LocationReminder,
-        System
+        // --Commented out by Inspection (4/15/2015 11:24 PM):System
     }
 }

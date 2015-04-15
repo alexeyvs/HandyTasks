@@ -5,6 +5,6 @@
         android:id="@+id/action_select_pick_time"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="Pick time..." />
+        android:title="@string/pick_time" />
 
 </menu>
