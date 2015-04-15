@@ -76,9 +76,9 @@ public class Task implements Parcelable {
         return mTaskText.matches("^\\s*[+]\\s*.*$");
     }
 
-    public void setCompleted(boolean completed) {
+    public Task setCompleted(boolean completed) {
         if (isCompleted() == completed) {
-            return;
+            return this;
         }
 
         if (completed) {
@@ -86,7 +86,7 @@ public class Task implements Parcelable {
         } else {
             mTaskText = mTaskText.replaceFirst("^\\s*[+]\\s*", "");
         }
-
+        return this;
     }
 
     public int getLineNumber() {
@@ -98,7 +98,7 @@ public class Task implements Parcelable {
     }
 
     public String getTaskText() {
-        return mTaskText.replace("\r", "");
+        return mTaskText.replace("\r", "").replace("\n", "");
     }
 
     // set task plain text
@@ -107,7 +107,8 @@ public class Task implements Parcelable {
         TaskReminder reminder = getReminder();
         boolean isCompleted = isCompleted();
 
-        mTaskText = taskText.replace("\r", "");
+        // set new text, removing all the line breaks
+        mTaskText = taskText.replace("\r", "").replace("\n", "");
 
         // restore special values
         setReminder(reminder);

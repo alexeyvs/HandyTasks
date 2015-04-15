@@ -155,7 +155,7 @@ public class DbFS extends ACloudAPIHolder implements ICloudFS {
             Result = CurrentStatus.isLatest && CurrentStatus.pending == DbxFileStatus.PendingOperation.NONE;
         } catch (DbxException e) {
             e.printStackTrace();
-            return Result;
+            return false;
         } finally {
             if (isOpen) {
                 currentFile.close();

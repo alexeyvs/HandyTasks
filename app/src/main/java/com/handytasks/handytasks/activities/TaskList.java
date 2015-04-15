@@ -43,7 +43,7 @@ import com.nhaarman.listviewanimations.itemmanipulation.dragdrop.TouchViewDragga
 import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.OnDismissCallback;
 import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.undo.SimpleSwipeUndoAdapter;
 
-public class TaskList extends Activity {
+public class TaskList extends BaseActivity {
     private static final String TAG = "TaskList activity";
     final Messenger mMessenger = new Messenger(new IncomingHandler());
     Messenger mService = null;
@@ -271,26 +271,24 @@ public class TaskList extends Activity {
         switch (requestCode) {
             case (TaskView.REQUEST_CODE_ADD_MODE): {
                 if (resultCode == Activity.RESULT_OK) {
-                    if (resultCode == Activity.RESULT_OK) {
+                    int action = data.getExtras().getInt("ACTION");
+                    Task taskItem = data.getParcelableExtra("DATA");
 
-                        int action = data.getExtras().getInt("ACTION");
-                        Task taskItem = data.getParcelableExtra("DATA");
-
-                        switch (action) {
-                            case TaskView.ACTION_EDIT: {
-                                if (null != taskItem) {
-                                    mTasks.Add(taskItem);
-                                }
-                                break;
+                    switch (action) {
+                        case TaskView.ACTION_EDIT: {
+                            if (null != taskItem) {
+                                mTasks.Add(taskItem);
                             }
-                            case TaskView.ACTION_DELETE: {
-                                if (null != taskItem) {
-                                    // just do not add
-                                }
-                                break;
+                            break;
+                        }
+                        case TaskView.ACTION_DELETE: {
+                            if (null != taskItem) {
+                                // just do not add
                             }
+                            break;
                         }
                     }
+
                 }
                 break;
             }
@@ -347,7 +345,7 @@ public class TaskList extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        switch (item.getItemId()) {
+        switch (id) {
             case R.id.action_settings: {
                 Intent intent;
                 intent = new Intent(this, PrefsActivity.class);
@@ -362,9 +360,6 @@ public class TaskList extends Activity {
                 overridePendingTransition(R.anim.in, R.anim.out);
                 return true;
             }
-            case R.id.action_select_cloud_provider:
-                startActivityForResult(new Intent(this, InitCloud.class), InitCloud.REQUEST_CODE_SELECT_PROVIDER);
-                return true;
             case R.id.action_sync_now:
                 ((HTApplication) getApplication()).forceSync(new IAsyncResult() {
                     @Override
@@ -413,10 +408,6 @@ public class TaskList extends Activity {
                 break;
             case R.id.action_sort_incomplete_za:
                 mTasks.sort(Tasks.SortTypes.IncompleteZA);
-                break;
-            case R.id.action_test:
-                Intent startServiceIntent = new Intent(getApplicationContext(), HTService.class);
-                getApplicationContext().startService(startServiceIntent);
                 break;
         }
 

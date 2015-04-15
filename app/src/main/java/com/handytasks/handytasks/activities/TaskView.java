@@ -1,10 +1,11 @@
 package com.handytasks.handytasks.activities;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -74,6 +75,14 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String theme = prefs.getString("theme", "HandyTasksTheme");
+        if (theme.equals("HandyTasksTheme")) {
+            setTheme(R.style.HandyTasksTheme);
+        } else if (theme.equals("HandyTasksThemeDark")) {
+            setTheme(R.style.HandyTasksThemeDark);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_view);
 
@@ -90,7 +99,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                 case REQUEST_CODE_ADD_MODE: {
                     mTaskItem = new Task();
                     String initialText = "";
-                    if (null != data && data.containsKey("task_text")) {
+                    if (data.containsKey("task_text")) {
                         initialText = data.getString("task_text");
                     }
                     mTaskItem.setTaskText(initialText);
@@ -175,8 +184,8 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             // get default values from task if any
             mReminderParams = mTaskItem.getReminder().getParams();
             mReminderType = mTaskItem.getReminder().getType();
-        } else if (mTaskItem.getReminder() == null) {
-            // set defaults
+        } else {
+            // no reminder set defaults
             mReminderParams = new ReminderParams(new Date());
             mReminderType = TaskReminder.ReminderType.Timed;
         }
@@ -267,8 +276,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     private void setTime(TimeIntervals.TimeInterval interval) {
         mTimeSelector.setText(interval.getCaption());
-        Calendar c = Calendar.getInstance(),
-                cNow = Calendar.getInstance();
+        Calendar c = Calendar.getInstance();
         c.setTime(mReminderParams.getTriggerDate());
         c.set(Calendar.HOUR_OF_DAY, interval.getHours());
         c.set(Calendar.MINUTE, interval.getMinutes());
@@ -348,8 +356,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
         switch (item.getItemId()) {
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
@@ -363,6 +369,13 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             case R.id.action_archive:
                 ReturnData(ACTION_ARCHIVE);
                 super.onBackPressed();
+                return true;
+            case R.id.action_share:
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, mTaskItem.getTaskPlainText());
+                sendIntent.setType("text/plain");
+                startActivity(sendIntent);
                 return true;
             case R.id.action_settings:
                 return true;
@@ -386,7 +399,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     public void onPickLocation(View view) {
         PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-        Context context = getApplicationContext();
         try {
             startActivityForResult(builder.build(getApplicationContext()), PLACE_PICKER_REQUEST);
         } catch (GooglePlayServicesRepairableException e) {
@@ -394,10 +406,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         } catch (GooglePlayServicesNotAvailableException e) {
             e.printStackTrace();
         }
-        // Intent intent = new Intent(getApplicationContext(), PickLocationActivity.class);
-        // intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        // startActivityForResult(intent, 0);
-
     }
 
     @Override

@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (getIntent().getAction() == "com.google.android.gm.action.AUTO_SEND") {
+        if (getIntent().getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
             // create new task
             Intent downloadIntent = new Intent(getIntent());
             downloadIntent.setClass(this, HTService.class);
@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        if (getIntent().getAction() == Intent.ACTION_SEND) {
+        if (getIntent().getAction().equals(Intent.ACTION_SEND)) {
             // create new task and show it in gui
             createNewTaskFromSendTo(getIntent());
             return;

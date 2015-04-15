@@ -28,15 +28,11 @@ public class DbAPI implements ICloudAPI {
         mContext = context;
         m_DbxAcctMgr = DbxAccountManager.getInstance(context, APP_KEY, APP_SECRET);
         if (!m_DbxAcctMgr.hasLinkedAccount()) {
-            if (null == activity) {
-                callback.OnFailure(activity.getString(R.string.cant_link_dropbox_without_parent_activity));
+            if (allowStartOfNewActivities) {
+                m_DbxAcctMgr.startLink((Activity) activity, REQUEST_LINK_TO_DBX);
+                callback.OnActionRequired(this);
             } else {
-                if (allowStartOfNewActivities) {
-                    m_DbxAcctMgr.startLink((Activity) activity, REQUEST_LINK_TO_DBX);
-                    callback.OnActionRequired(this);
-                } else {
-                    callback.OnFailure(R.string.dropbox_not_linked);
-                }
+                callback.OnFailure(R.string.dropbox_not_linked);
             }
         } else {
             setReady();

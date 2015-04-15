@@ -79,7 +79,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     public void processIntent(Intent intent) {
         // check if we need something special
         final Intent currentIntent = intent;
-        if (currentIntent.getAction() == "com.google.android.gm.action.AUTO_SEND") {
+        if (currentIntent.getAction().equals("com.google.android.gm.action.AUTO_SEND")) {
             // create new task
             createNewTaskFromGoogleNow(currentIntent);
         }
@@ -371,7 +371,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
         String proximityDistanceStr = prefs.getString("proximity_distance", "100");
         int proximityDistance = 100;
-        if (null == proximityDistanceStr) {
+        if (null != proximityDistanceStr) {
             proximityDistance = Integer.getInteger(proximityDistanceStr, proximityDistance);
         }
 

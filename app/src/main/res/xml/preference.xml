@@ -2,6 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="General">
+        <Preference
+            android:summary="Allows to select cloud provider to store your tasks. If you change currently selected provider tasks stored will not be preserved in program, but will appear again if you switch back to old provider."
+            android:title="Select cloud provider">
+            <intent
+                android:targetClass="com.handytasks.handytasks.activities.InitCloud"
+                android:targetPackage="com.handytasks.handytasks" />
+        </Preference>
 
         <CheckBoxPreference
             android:defaultValue="false"
@@ -12,6 +19,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Appearance">
+        <ListPreference
+            android:defaultValue="HandyTasksTheme"
+            android:entries="@array/themeCaptions"
+            android:entryValues="@array/themeValues"
+            android:key="theme"
+            android:title="Theme" />
 
         <ListPreference
             android:entries="@array/fontSizeCaptions"
@@ -29,10 +42,13 @@
             android:title="@string/pref_title_new_message_notifications" />
 
         <ListPreference
+            android:dependency="reminder_notify"
             android:entries="@array/proximityCaptions"
             android:entryValues="@array/proximityValues"
             android:key="proximity_distance"
-            android:title="Location reminder proximity (meters)" />
+            android:summary="Select proximity radius for location based reminders in meters"
+            android:title="Location proximity" />
+
 
         <!-- Allows the user to choose a ringtone in the 'notification' category. -->
         <!-- NOTE: This preference will be enabled only when the checkbox above is checked. -->

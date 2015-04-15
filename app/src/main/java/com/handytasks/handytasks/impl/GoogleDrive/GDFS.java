@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
@@ -221,7 +220,6 @@ public class GDFS extends ACloudAPIHolder implements ICloudFS {
 
     @Override
     public Boolean WriteToFile(ICloudFile file, String data) throws IOException {
-        String contents = null;
         DriveFile driveFile = Drive.DriveApi.getFile(mClient, (DriveId) file.getNativeDescriptior());
         DriveApi.DriveContentsResult driveContentsResult =
                 driveFile.open(mClient, DriveFile.MODE_WRITE_ONLY, null).await();
@@ -233,7 +231,7 @@ public class GDFS extends ACloudAPIHolder implements ICloudFS {
         OutputStream output = driveContents.getOutputStream();
         output.write(data.getBytes());
 
-        Status status = driveContents.commit(mClient, null).await();
+        driveContents.commit(mClient, null).await();
 
         return true;
     }

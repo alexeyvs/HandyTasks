@@ -66,9 +66,6 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
 
     @Override
     public Task getItem(int position) {
-        if (position < 0 || position >= mObjects.size()) {
-            return null;
-        }
         return mObjects.get(position);
     }
 
@@ -113,11 +110,6 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
     public View getView(final int position, final View convertView1, final ViewGroup parent) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         String fontSizeVal = prefs.getString("task_list_font_size", "2");
-        try {
-            Integer.parseInt(fontSizeVal);
-        } catch (Exception e) {
-            fontSizeVal = "2";
-        }
 
         Task task = getItem(position);
         LayoutInflater inflater = LayoutInflater.from(getContext());

@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RadioButton;
 
 import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.impl.Dropbox.DbAPI;
@@ -23,7 +24,7 @@ import com.handytasks.handytasks.interfaces.ICloudFile;
 import com.handytasks.handytasks.interfaces.IInitAPI;
 import com.handytasks.handytasks.interfaces.IOpenFileResult;
 
-public class InitCloud extends Activity {
+public class InitCloud extends BaseActivity {
     public static final int REQUEST_CODE_INIT_CLOUD = 1;
     public static final int REQUEST_CODE_SELECT_PROVIDER = 2;
     private static final String TAG = "InitCloud activity";
@@ -39,6 +40,15 @@ public class InitCloud extends Activity {
         setConnectionSetupInProgress(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_init_cloud);
+
+        // set checkbox state
+        SharedPreferences prefs = getSharedPreferences(
+                "com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
+        if (prefs.getString("cloud_type", "").equals("Dropbox")) {
+            ((RadioButton) findViewById(R.id.radio_dropbox)).setChecked(true);
+        } else {
+            ((RadioButton) findViewById(R.id.radio_google_drive)).setChecked(true);
+        }
     }
 
     public void onInitDropbox(View view) {

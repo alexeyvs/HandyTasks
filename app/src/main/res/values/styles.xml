@@ -2,4 +2,7 @@
 <resources>
 
     <style name="HandyTasksTheme" parent="@android:style/Theme.Holo.Light"></style>
+
+    <style name="HandyTasksThemeDark" parent="@android:style/Theme.Holo"></style>
+
 </resources>

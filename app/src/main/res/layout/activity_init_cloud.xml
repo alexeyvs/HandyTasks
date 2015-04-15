@@ -4,12 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingTop="16dp"
     tools:context="com.handytasks.handytasks.activities.InitCloud">
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingRight="8dp"
         android:text="@string/init_cloud_welcome_text"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -17,29 +19,30 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:paddingTop="32dp"
         android:text="@string/please_select_sync_engine_to_use"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/dropbox_button"
+        <RadioButton
+            android:id="@+id/radio_dropbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onInitDropbox"
             android:text="@string/dropbox_caption" />
 
-        <Button
-            android:id="@+id/google_drive_button"
+        <RadioButton
+            android:id="@+id/radio_google_drive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onInitGoogleDrive"
-            android:text="@string/google_drive_caption" />
+            android:text="@string/google_drive_caption"
 
-    </LinearLayout>
+            />
+    </RadioGroup>
 
 </LinearLayout>

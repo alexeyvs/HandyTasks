@@ -83,7 +83,7 @@ public class TaskTypes {
             @Override
             public void OnSuccess(Tasks result, int title) {
                 Log.d(TAG, String.format("Archiving task %s line number %d", task.getTaskText(), task.getLineNumber()));
-                result.Add(new Task(task));
+                result.Add(new Task(task).setCompleted(true));
                 mainList.deleteTask(task);
                 new Toast(context).makeText(context, String.format("Task \"%s\" archived", task.getTaskPlainText()), Toast.LENGTH_LONG).show();
                 if (null != callback) callback.OnSuccess(null);

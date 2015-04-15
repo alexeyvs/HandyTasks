@@ -3,4 +3,6 @@
 
     <style name="HandyTasksTheme" parent="@android:style/Theme.Material.Light"></style>
 
+    <style name="HandyTasksThemeDark" parent="@android:style/Theme.Material"></style>
+
 </resources>
