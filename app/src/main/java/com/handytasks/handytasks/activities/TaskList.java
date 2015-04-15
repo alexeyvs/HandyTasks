@@ -2,6 +2,7 @@ package com.handytasks.handytasks.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -131,7 +132,9 @@ public class TaskList extends Activity {
     }
 
     private void initTasks(boolean force) {
-
+        final ProgressDialog loadingProgress = new ProgressDialog(this);
+        loadingProgress.setTitle("Loading tasks...");
+        loadingProgress.show();
 
         getTaskTypes().getTasks(force, mType, new ICreateTasksResult() {
             @Override
@@ -149,17 +152,6 @@ public class TaskList extends Activity {
                 listView.setOnItemLongClickListener(new MyOnItemLongClickListener(listView));
 
                 SimpleSwipeUndoAdapter simpleSwipeUndoAdapter = new SimpleSwipeUndoAdapter(mAdapter, getApplicationContext(), new MyOnDismissCallback(mAdapter));
-                /*
-                listView.enableSwipeToDismiss(new OnDismissCallback() {
-                    @Override
-                    public void onDismiss(@NonNull ViewGroup viewGroup, @NonNull int[] reverseSortedPositions) {
-                        Log.d(TAG, "onDismiss");
-                        for (int position : reverseSortedPositions) {
-                            mAdapter.remove(position);
-                        }
-                    }
-                });
-                */
 
                 AlphaInAnimationAdapter animAdapter = new AlphaInAnimationAdapter(simpleSwipeUndoAdapter);
                 animAdapter.setAbsListView(listView);
@@ -169,23 +161,13 @@ public class TaskList extends Activity {
 
                 /* Enable swipe to dismiss */
                 listView.enableSimpleSwipeUndo();
-
-
-/*
-                listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                    @Override
-                    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                        listView.startDragging(position);
-                        return true;
-                    }
-                });
-*/
-
-                // listView.enableSimpleSwipeUndo();
+                listView.setDivider(null);
+                listView.setDividerHeight(0);
 
                 mTasks.readIfEmpty(new IAsyncResult() {
                     @Override
                     public void OnSuccess(String result) {
+                        loadingProgress.dismiss();
                         // check if we need to enable filter
                         Intent intent = getIntent();
                         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
@@ -193,6 +175,7 @@ public class TaskList extends Activity {
                             setTitle("Search results");
                         }
 
+                        // edit task
                         if (intent.getStringExtra("action") != null && intent.getStringExtra("action").equals("open_task")) {
                             // find task
                             Task taskToOpen = mTasks.findByText(intent.getStringExtra("task_text"));
@@ -205,18 +188,36 @@ public class TaskList extends Activity {
                                 intent.removeExtra("task_text");
                             }
                         }
+
+                        // open task
+                        if (intent.getStringExtra("action") != null && intent.getStringExtra("action").equals("new_task")) {
+                            Intent newIntent;
+                            newIntent = new Intent(TaskList.this, TaskView.class);
+                            newIntent.putExtra("requestCode", TaskView.REQUEST_CODE_ADD_MODE);
+                            if (intent.getExtras().containsKey("task_text")) {
+                                newIntent.putExtra("task_text", intent.getStringExtra("task_text"));
+                                intent.removeExtra("task_text");
+                            } else {
+                                newIntent.putExtra("task_text", intent.getStringExtra(""));
+                            }
+                            intent.removeExtra("action");
+                            startActivityForResult(newIntent, TaskView.REQUEST_CODE_ADD_MODE);
+                        }
                     }
 
                     @Override
                     public void OnFailure(String result) {
+                        loadingProgress.dismiss();
                         Log.e(TAG, result);
                     }
                 });
+                Log.d(TAG, "OnSuccess of getTasks done");
             }
 
             @Override
             public void OnFailure(String result) {
                 mTasks = null;
+                loadingProgress.dismiss();
                 HandleError(result);
             }
         });
@@ -445,12 +446,15 @@ public class TaskList extends Activity {
             switch (msg.what) {
                 case HTService.MSG_SET_INT_VALUE:
                     // textIntValue.setText("Int Message: " + msg.arg1);
-                    mTasks.taskListChanged();
+                    if (mTasks != null) {
+                        mTasks.taskListChanged();
+                    }
                     break;
                 case HTService.MSG_SET_STRING_VALUE:
                     String str1 = msg.getData().getString("str1");
-                    mTasks.taskListChanged();
-                    // textStrValue.setText("Str Message: " + str1);
+                    if (mTasks != null) {
+                        mTasks.taskListChanged();
+                    }
                     break;
                 default:
                     super.handleMessage(msg);

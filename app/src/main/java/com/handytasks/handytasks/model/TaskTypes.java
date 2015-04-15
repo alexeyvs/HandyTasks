@@ -11,6 +11,7 @@ import com.handytasks.handytasks.interfaces.IAsyncResult;
 import com.handytasks.handytasks.interfaces.ICloudFSStorage;
 import com.handytasks.handytasks.interfaces.ICreateTasksResult;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -20,7 +21,7 @@ import java.util.Map;
 public class TaskTypes {
     private final static String TAG = "TaskTypes";
     private final ICloudFSStorage mFSStorage;
-    private final Hashtable<TaskListTypes, TasksContainer> mTasks = new Hashtable<TaskListTypes, TasksContainer>();
+    private final Hashtable<TaskListTypes, TasksContainer> mTasks = new Hashtable<>();
 
     public TaskTypes(ICloudFSStorage storage) {
         mFSStorage = storage;
@@ -37,8 +38,13 @@ public class TaskTypes {
         return null;
     }
 
-    public Tasks getTasks(boolean force, final TaskListTypes type, final ICreateTasksResult callback) {
+    public synchronized void getTasks(boolean force, final TaskListTypes type, final ICreateTasksResult callback) {
         if (force || null == mTasks.get(type).getTasks()) {
+            if (null == mFSStorage.getFS()) {
+                callback.OnFailure("API is not not initialized");
+                return;
+            }
+
             new Tasks(type, mFSStorage.getFS(), mTasks.get(type).getFilename(), new ICreateTasksResult() {
                 @Override
                 public void OnSuccess(Tasks result, int title) {
@@ -54,9 +60,7 @@ public class TaskTypes {
             });
         } else {
             callback.OnSuccess(mTasks.get(type).getTasks(), mTasks.get(type).getTitle());
-            return mTasks.get(type).getTasks();
         }
-        return null;
     }
 
     public void archiveTask(final Task task, final IAsyncResult callback, boolean ifRequired, final Context context) {
@@ -94,10 +98,42 @@ public class TaskTypes {
         // open archive
     }
 
+    public void clear() {
+        synchronized (mTasks) {
+            Enumeration<TaskListTypes> enumKey = mTasks.keys();
+            while (enumKey.hasMoreElements()) {
+                TaskListTypes key = enumKey.nextElement();
+                mTasks.get(key).resetTasks();
+            }
+        }
+    }
+
+    public void createNewTask(final String text, final ITaskCreatedResult callback) {
+        getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
+            @Override
+            public void OnSuccess(final Tasks result, final int title) {
+                Task newTask = new Task(text, 0, result);
+                result.Add(newTask);
+                callback.OnSuccess(newTask);
+            }
+
+            @Override
+            public void OnFailure(String result) {
+                callback.OnFailure(result);
+            }
+        });
+    }
 
     public enum TaskListTypes {
         MainList,
         ArchivedList
+    }
+
+
+    public interface ITaskCreatedResult {
+        public void OnSuccess(Task task);
+
+        public void OnFailure(String error);
     }
 
     public class TasksContainer {
@@ -136,6 +172,10 @@ public class TaskTypes {
         public TasksContainer setTasks(Tasks mTasks) {
             this.mTasks = mTasks;
             return this;
+        }
+
+        public void resetTasks() {
+            mTasks = null;
         }
     }
 }

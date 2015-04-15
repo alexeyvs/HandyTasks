@@ -52,6 +52,9 @@ public class HTService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (null != mWorker) {
+            mWorker.processIntent(intent);
+        }
         return Service.START_STICKY;
     }
 

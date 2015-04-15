@@ -198,11 +198,6 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
         this.mActivity = activity;
     }
 
-    @Override
-    public void TaskListChanged() {
-        notifyDataSetChanged();
-    }
-
     public void setFilter(String filter) {
         mFilter = filter;
     }
@@ -238,5 +233,10 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
     @Override
     public View getUndoClickView(@NonNull final View view) {
         return view.findViewById(R.id.undo_row_undobutton);
+    }
+
+    @Override
+    public void TaskListChanged(Tasks tasks) {
+        notifyDataSetChanged();
     }
 }

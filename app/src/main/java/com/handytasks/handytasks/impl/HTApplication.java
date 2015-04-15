@@ -34,6 +34,7 @@ public class HTApplication extends Application implements ICloudFSStorage {
     private final TaskTypes mTaskTypes = new TaskTypes(this);
     private ICloudAPI m_CloudAPI;
     private ICloudWatcher m_CloudWatcher;
+    private boolean mConnectionSetupInProgress;
 
     public void setAPI(ICloudAPI api) {
         m_CloudAPI = api;
@@ -55,13 +56,13 @@ public class HTApplication extends Application implements ICloudFSStorage {
         CloudAPIFactory.generateAPI(activity, context, callback, allowStartOfNewActivities);
     }
 
-
     public ICloudAPI getCloudAPI() {
         return m_CloudAPI;
     }
 
     public void resetCloudAPI() {
         m_CloudAPI = null;
+        mTaskTypes.clear();
     }
 
     public boolean isAPIInitialized() {
@@ -79,9 +80,15 @@ public class HTApplication extends Application implements ICloudFSStorage {
         return fs;
     }
 
-
     public TaskTypes getTaskTypes() {
         return mTaskTypes;
     }
 
+    public boolean isConnectionSetupInProgress() {
+        return mConnectionSetupInProgress;
+    }
+
+    public void setConnectionSetupInProgress(boolean value) {
+        mConnectionSetupInProgress = value;
+    }
 }

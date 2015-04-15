@@ -89,7 +89,11 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             switch (mRequestCode) {
                 case REQUEST_CODE_ADD_MODE: {
                     mTaskItem = new Task();
-                    mTaskItem.setTaskText("");
+                    String initialText = "";
+                    if (null != data && data.containsKey("task_text")) {
+                        initialText = data.getString("task_text");
+                    }
+                    mTaskItem.setTaskText(initialText);
                     UpdateTaskText();
                     break;
                 }
@@ -124,9 +128,8 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
         // update reminder controls
         if (null != mTaskItem.getReminder()) {
-            onToggleReminder(null);
+            toggleReminder(null, true);
         }
-
     }
 
     private boolean isToday(Date date) {
@@ -150,7 +153,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         }
     }
 
-    public void onToggleReminder(View view) {
+    private void toggleReminder(View view, boolean animate) {
         LinearLayout layout = ((LinearLayout) findViewById(R.id.reminder_params_layout));
         if (layout.getVisibility() == View.VISIBLE) {
             mTaskItem.setReminder(null);
@@ -159,9 +162,10 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             return;
         } else {
             layout.setVisibility(View.VISIBLE);
-            Animation anima = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_in);
-            layout.startAnimation(anima);
-
+            if (animate) {
+                Animation anima = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_in);
+                layout.startAnimation(anima);
+            }
         }
 
         if (null == mTaskItem.getReminder() && mReminderParams != null) {
@@ -180,6 +184,11 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         mReminderParams.setChangesHandler(this);
         OnUpdateReminderParams(mReminderParams);
         initReminderControls();
+    }
+
+
+    public void onToggleReminder(View view) {
+        toggleReminder(view, true);
 
     }
 

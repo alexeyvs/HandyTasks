@@ -37,6 +37,7 @@ public class Task implements Parcelable {
     private Task(Parcel in) {
         mId = new Random().nextLong();
         mTaskText = in.readString();
+        mTaskText = getTaskText();
         setLineNumber(in.readInt());
         setType(TaskTypes.TaskListTypes.valueOf(in.readString()));
     }
@@ -54,6 +55,7 @@ public class Task implements Parcelable {
     public Task(String s, int lineNumber, Tasks parent) {
         mId = new Random().nextLong();
         mTaskText = s;
+        mTaskText = getTaskText();
         setLineNumber(lineNumber);
         m_Parent = parent;
         setType(m_Parent.getType());
@@ -156,9 +158,9 @@ public class Task implements Parcelable {
 
     // extract reminder params from task text if any
     public TaskReminder getReminder() {
-        if (mTaskText.matches(".*remind:\\[(.*)\\]")) {
-            Pattern reminderPattern = Pattern.compile(".*?remind:\\[(.*?)\\].*", Pattern.CASE_INSENSITIVE);
-            Matcher reminderMatcher = reminderPattern.matcher(getTaskText());
+        Pattern reminderPattern = Pattern.compile(".*?remind:\\[(.*?)\\].*", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        Matcher reminderMatcher = reminderPattern.matcher(getTaskText());
+        if (reminderMatcher.matches()) {
             if (reminderMatcher.matches()) {
                 if (reminderMatcher.groupCount() < 1) {
                     mReminder = null;

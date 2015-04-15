@@ -98,7 +98,9 @@ public class Tasks implements IFSChangeHandler {
 
     public void addChangedEventHandler(ITaskListChanged listChangedEvent) {
         synchronized (mTaskListChangedHandlers) {
-            mTaskListChangedHandlers.add(listChangedEvent);
+            if (!mTaskListChangedHandlers.contains(listChangedEvent)) {
+                mTaskListChangedHandlers.add(listChangedEvent);
+            }
         }
     }
 
@@ -133,7 +135,7 @@ public class Tasks implements IFSChangeHandler {
 
                 synchronized (mTaskListChangedHandlers) {
                     for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
-                        mTaskListChangedHandler.TaskListChanged();
+                        mTaskListChangedHandler.TaskListChanged(Tasks.this);
                     }
                 }
 
@@ -293,7 +295,7 @@ public class Tasks implements IFSChangeHandler {
     public void taskListChanged() {
         synchronized (mTaskListChangedHandlers) {
             for (ITaskListChanged mTaskListChangedHandler : mTaskListChangedHandlers) {
-                mTaskListChangedHandler.TaskListChanged();
+                mTaskListChangedHandler.TaskListChanged(this);
             }
         }
 

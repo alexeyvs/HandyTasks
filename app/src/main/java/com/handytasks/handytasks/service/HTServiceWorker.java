@@ -13,8 +13,10 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.RemoteInput;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -50,6 +52,7 @@ import static android.media.RingtoneManager.getRingtone;
  */
 public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = "HTServiceWorker";
+    private static final String KEY_INTERRUPT_REASON = "Interrupt reason";
     private final HTService mService;
     private boolean mStopSignal = false;
     private boolean mStopped;
@@ -58,6 +61,12 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest mLocationRequest;
     private Location mLastKnownLocation;
+    private ITaskListChanged mTaskListChangedHandler = new ITaskListChanged() {
+        @Override
+        public void TaskListChanged(Tasks tasks) {
+            processSchedules(tasks);
+        }
+    };
 
     public HTServiceWorker(HTService service) {
         mService = service;
@@ -65,6 +74,40 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
     public void signalStop() {
         mStopSignal = true;
+    }
+
+    public void processIntent(Intent intent) {
+        // check if we need something special
+        final Intent currentIntent = intent;
+        if (currentIntent.getAction() == "com.google.android.gm.action.AUTO_SEND") {
+            // create new task
+            createNewTaskFromGoogleNow(currentIntent);
+        }
+    }
+
+    private void createNewTaskFromGoogleNow(final Intent intent) {
+        if (intent.getExtras() != null &&
+                intent.getExtras().containsKey("android.intent.extra.SUBJECT") &&
+                intent.getExtras().containsKey("android.intent.extra.TEXT")) {
+
+            ((HTApplication) mService.getApplication()).getTaskTypes().createNewTask(intent.getStringExtra("android.intent.extra.TEXT"), new TaskTypes.ITaskCreatedResult() {
+                @Override
+                public void OnSuccess(Task task) {
+                    new Toast(mService.getApplicationContext())
+                            .makeText(mService.getApplicationContext(), "Task created: " + task.getTaskPlainText(), Toast.LENGTH_LONG)
+                            .show();
+                }
+
+                @Override
+                public void OnFailure(String error) {
+                    new Toast(mService.getApplicationContext())
+                            .makeText(mService.getApplicationContext(), "Failed to create task: " + error, Toast.LENGTH_LONG)
+                            .show();
+                }
+            });
+            intent.removeExtra("android.intent.extra.SUBJECT");
+            intent.removeExtra("android.intent.extra.TEXT");
+        }
     }
 
     private void sendNotification(NotificationType notificationType, String title, String text) {
@@ -85,6 +128,12 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 break;
         }
 
+        String[] excuses = {"Coworker", "Facebook", "Exercise", "Nap", "Phone", "N/A"};
+        RemoteInput remoteInput = new RemoteInput.Builder(KEY_INTERRUPT_REASON)
+                .setLabel("Reason?")
+                .setChoices(excuses)
+                .build();
+
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(mService.getApplicationContext(), MainActivity.class);
         resultIntent.putExtra("action", "open_task");
@@ -104,6 +153,14 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
+
+        NotificationCompat.Action interruptAction =
+                new NotificationCompat.Action.Builder(R.drawable.ic_notification_location, "Interrupt", resultPendingIntent)
+                        .addRemoteInput(remoteInput)
+                        .build();
+        mBuilder.extend(new NotificationCompat.WearableExtender().addAction(interruptAction));
+
+
         NotificationManager mNotificationManager =
                 (NotificationManager) mService.getSystemService(Service.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
@@ -199,6 +256,18 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
         while (!mStopSignal) {
 
+            try {
+                Thread.sleep(5000, 0);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            i++;
+
+            if (((HTApplication) mService.getApplication()).isConnectionSetupInProgress()) {
+                // do not interfere with connection setup
+                continue;
+            }
 
             if (((HTApplication) mService.getApplication()).isAPIInitialized()) {
                 ///sendNotification("API status", "ready");
@@ -206,13 +275,10 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 ((HTApplication) mService.getApplication()).getTaskTypes().getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
                     @Override
                     public void OnSuccess(final Tasks result, int title) {
-                        processSchedules(result);
-                        result.addChangedEventHandler(new ITaskListChanged() {
-                            @Override
-                            public void TaskListChanged() {
-                                processSchedules(result);
-                            }
-                        });
+                        synchronized (result) {
+                            processSchedules(result);
+                            result.addChangedEventHandler(mTaskListChangedHandler);
+                        }
                     }
 
                     @Override
@@ -220,13 +286,6 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
                     }
                 });
-
-                try {
-                    Thread.sleep(5000, 0);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
             } else {
 
                 ((HTApplication) mService.getApplication()).generateAPI(mService, mService.getApplicationContext(), new IInitAPI() {
@@ -248,14 +307,9 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
                 }, false);
             }
 
-            try {
-                Thread.sleep(5000, 0);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
-            i++;
         }
+        mGoogleAPIClient.disconnect();
         mStopped = true;
     }
 
@@ -313,7 +367,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
     }
 
-    private void processLocationUpdate(Location currentLocation, Tasks tasks) {
+    private void processLocationUpdate(Location currentLocation, final Tasks tasks) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService.getApplicationContext());
         String proximityDistanceStr = prefs.getString("proximity_distance", "100");
         int proximityDistance = 100;

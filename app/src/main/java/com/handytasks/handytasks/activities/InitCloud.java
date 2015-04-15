@@ -28,11 +28,15 @@ public class InitCloud extends Activity {
     public static final int REQUEST_CODE_SELECT_PROVIDER = 2;
     private static final String TAG = "InitCloud activity";
 
-
     private ICloudAPI m_CloudAPI;
+
+    private void setConnectionSetupInProgress(boolean value) {
+        ((HTApplication) getApplication()).setConnectionSetupInProgress(value);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setConnectionSetupInProgress(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_init_cloud);
     }
@@ -132,12 +136,14 @@ public class InitCloud extends Activity {
         if (null == m_CloudAPI) {
             ((HTApplication) getApplication()).generateAPI(this, getApplicationContext(), new IInitAPI() {
                 @Override
+
                 public void OnSuccess(ICloudAPI result) {
                     m_CloudAPI = result;
                     ((HTApplication) getApplication()).setAPI(result);
                     if (m_CloudAPI.isReady()) {
                         Intent intent = new Intent();
                         setResult(Activity.RESULT_OK, intent);
+                        setConnectionSetupInProgress(false);
                         finish();
                     }
                 }
@@ -162,6 +168,12 @@ public class InitCloud extends Activity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        setConnectionSetupInProgress(false);
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (null == m_CloudAPI) {
@@ -176,6 +188,7 @@ public class InitCloud extends Activity {
                         ((HTApplication) getApplication()).setAPI(m_CloudAPI);
                         Intent intent = new Intent(InitCloud.this, MainActivity.class);
                         startActivity(intent);
+                        setConnectionSetupInProgress(false);
                         finish();
                     }
 
@@ -189,7 +202,8 @@ public class InitCloud extends Activity {
                         ErrorReporter.ReportError(m_CloudAPI.getClass(), InitCloud.this, result.toString());
                     }
                 });
-
+            } else {
+                ErrorReporter.ReportError(this.getClass(), InitCloud.this, "Connection setup canceled");
             }
         }
     }
