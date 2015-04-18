@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.handytasks.handytasks.R;
@@ -28,6 +29,7 @@ import com.nhaarman.listviewanimations.itemmanipulation.swipedismiss.undo.UndoAd
 import com.nhaarman.listviewanimations.util.Swappable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 //import com.terlici.dragndroplist.DragNDropAdapter;
 //import com.terlici.dragndroplist.DragNDropListView;
@@ -122,7 +124,7 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
         TextView textView = (TextView) resultView.findViewById(R.id.task_text);
         textView.setTextAppearance(getContext(), getAppearance(Integer.parseInt(fontSizeVal)));
 
-        textView.setText(task.getTaskPlainText());
+        textView.setText(task.getTaskPainTextWithoutTags());
         task.setAdapter(this);
         final CheckBox currentItemCompleted = (CheckBox) resultView.findViewById(R.id.isCompleted);
         if (task.isCompleted()) {
@@ -181,7 +183,23 @@ public class TasksAdapter extends ArrayAdapter<Task> implements ITaskListChanged
             }
         });
 
-        resultView.findViewById(R.id.task_text).setOnTouchListener(new OnTaskListSwipeListener(mActivity.getApplicationContext(), task, mActivity));
+        View taskTextContainer = resultView.findViewById(R.id.task_text_container);
+        LinearLayout taskTagsContainer = (LinearLayout) resultView.findViewById(R.id.task_tags_container);
+        taskTextContainer.setOnTouchListener(new OnTaskListSwipeListener(mActivity.getApplicationContext(), task, mActivity, (View) taskTextContainer, taskTagsContainer));
+
+        // add tags
+        List<String> tags = task.getTags();
+        if (!tags.isEmpty()) {
+            LinearLayout tagContainer = ((LinearLayout) resultView.findViewById(R.id.task_tags_container));
+
+            for (int i = 0; i < tags.size(); i++) {
+                TextView tagView = ((TextView) inflater.inflate(R.layout.tag_view, null, false));
+                tagView.setVisibility(View.VISIBLE);
+                tagView.setText(tags.get(i));
+                int index = tagContainer.getChildCount();
+                tagContainer.addView(tagView, index, tagContainer.getLayoutParams());
+            }
+        }
 
         return resultView;
     }

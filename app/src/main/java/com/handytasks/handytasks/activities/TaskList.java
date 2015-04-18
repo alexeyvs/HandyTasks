@@ -171,7 +171,7 @@ public class TaskList extends BaseActivity {
                         Intent intent = getIntent();
                         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                             mAdapter.setFilter(intent.getStringExtra(SearchManager.QUERY));
-                            setTitle(getString(R.string.search_results));
+                            setTitle(getString(R.string.search_results) + ": " + intent.getStringExtra(SearchManager.QUERY));
                         }
 
                         // edit task

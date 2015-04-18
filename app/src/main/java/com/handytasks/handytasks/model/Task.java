@@ -9,6 +9,7 @@ import com.handytasks.handytasks.R;
 import com.handytasks.handytasks.controls.TasksAdapter;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -165,6 +166,10 @@ public class Task implements Parcelable {
         return getTaskText().replaceFirst("^\\s*[+]\\s*", "").replaceAll("remind:\\[(.*)\\]", "");
     }
 
+    public String getTaskPainTextWithoutTags() {
+        return getTaskPlainText().replaceAll("#(.+?)(\\s|$)", "");
+    }
+
     TaskTypes.TaskListTypes getType() {
         return mType;
     }
@@ -229,5 +234,20 @@ public class Task implements Parcelable {
             return context.getString(R.string.you_are_near_location);
         }
         return "";
+    }
+
+    public ArrayList<String> getTags() {
+        ArrayList<String> tags = new ArrayList<>();
+        Pattern tagsPattern = Pattern.compile("#(.+?)(\\s|$)", Pattern.CASE_INSENSITIVE);
+        Matcher tagsMatcher = tagsPattern.matcher(getTaskText());
+
+        while (tagsMatcher.find()) {
+            for (int i = 1; i < tagsMatcher.groupCount(); i++) {
+                tags.add(tagsMatcher.group(i));
+            }
+
+        }
+
+        return tags;
     }
 }

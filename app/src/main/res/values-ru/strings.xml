@@ -79,4 +79,8 @@
     <string name="pick_time">Выбрать время...</string>
     <string name="dismiss">Скрыть</string>
     <string name="done">Завершить</string>
+    <string name="add_reminder">Добавить напоминание</string>
+    <string name="morning_underline"><u>Утро</u></string>
+    <string name="remove_reminder">Отменить напоминание</string>
+    <string name="today_underline"><u>Сегодня</u></string>
 </resources>

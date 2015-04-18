@@ -1,13 +1,18 @@
 package com.handytasks.handytasks.impl;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.handytasks.handytasks.R;
+import com.handytasks.handytasks.activities.SearchResultsActivity;
 import com.handytasks.handytasks.activities.TaskList;
 import com.handytasks.handytasks.activities.TaskView;
 import com.handytasks.handytasks.interfaces.IAsyncResult;
@@ -24,10 +29,10 @@ public class OnTaskListSwipeListener implements View.OnTouchListener {
     private final TaskList mActivity;
     private GestureDetector gestureDetector = null;
 
-    public OnTaskListSwipeListener(Context context, Task task, TaskList activity) {
+    public OnTaskListSwipeListener(Context context, Task task, TaskList activity, View view, LinearLayout mTaskTagsContainer) {
         mTask = task;
         mActivity = activity;
-        gestureDetector = new GestureDetector(context, new TaskListGestureListener(task, context, activity));
+        gestureDetector = new GestureDetector(context, new TaskListGestureListener(task, context, activity, mTaskTagsContainer, view));
     }
 
     public boolean onTouch(final View view, final MotionEvent motionEvent) {
@@ -73,17 +78,18 @@ public class OnTaskListSwipeListener implements View.OnTouchListener {
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
         private static final String TAG = "TaskListGestureListener";
-
+        private final LinearLayout mTaskTagsContainer;
+        private final View mView;
         private Task mTask = null;
-
         private Context mContext = null;
-
         private TaskList mActivity = null;
 
-        public TaskListGestureListener(Task task, Context context, TaskList activity) {
+        public TaskListGestureListener(Task task, Context context, TaskList activity, LinearLayout taskTagsContainer, View view) {
             mTask = task;
             mContext = context;
             mActivity = activity;
+            mTaskTagsContainer = taskTagsContainer;
+            mView = view;
         }
 
         @Override
@@ -104,6 +110,24 @@ public class OnTaskListSwipeListener implements View.OnTouchListener {
         @Override
         public void onLongPress(MotionEvent e) {
             super.onLongPress(e);
+
+            // enum child views
+            for (int i = mTaskTagsContainer.getChildCount() - 1; i >= 0; i--) {
+                if (mTaskTagsContainer.getChildAt(i).getClass() == TextView.class) {
+                    TextView view = (TextView) mTaskTagsContainer.getChildAt(i);
+                    Rect bounds = new Rect();
+                    view.getHitRect(bounds);
+                    if (bounds.contains((int) e.getX() - mTaskTagsContainer.getLeft(), (int) e.getY() - mTaskTagsContainer.getTop())) {
+                        // filter
+                        Intent intent = new Intent(this.mContext, SearchResultsActivity.class);
+                        intent.setAction(Intent.ACTION_SEARCH);
+                        intent.putExtra(SearchManager.QUERY, "#" + view.getText());
+                        mActivity.startActivity(intent);
+                        return;
+                    }
+                }
+            }
+
             Log.d(TAG, "Long press");
         }
 

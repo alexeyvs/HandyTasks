@@ -11,6 +11,7 @@ import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,6 +39,7 @@ import com.handytasks.handytasks.model.TimeIntervals;
 import com.sleepbot.datetimepicker.time.RadialPickerLayout;
 import com.sleepbot.datetimepicker.time.TimePickerDialog;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -54,7 +56,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     private static final String TAG = "TaskView activity";
     private final static int TIME_INTERVALS_MENU_ID_START = 100;
     private int mRequestCode;
-    private Task mTaskItem;
+    private Task mTask;
     private TextView taskText = null;
     private CheckBox mTaskCompleted = null;
     private TextView mDateSelector;
@@ -64,11 +66,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     private TextView mReminderTypeSelect;
     private TextView mLocationSelector;
     private TimeIntervals mTimeIntervals;
+    private ArrayList<String> mDisplayedTags = new ArrayList<>();
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putInt("requestCode", mRequestCode);
-        outState.putParcelable("taskItem", mTaskItem);
+        outState.putParcelable("taskItem", mTask);
         super.onSaveInstanceState(outState);
     }
 
@@ -90,36 +93,39 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
         if (savedInstanceState != null) {
             mRequestCode = savedInstanceState.getInt("requestCode");
-            mTaskItem = savedInstanceState.getParcelable("taskItem");
+            mTask = savedInstanceState.getParcelable("taskItem");
         } else {
             Bundle data = getIntent().getExtras();
             mRequestCode = data.getInt("requestCode");
             switch (mRequestCode) {
                 case REQUEST_CODE_ADD_MODE: {
-                    mTaskItem = new Task();
+                    mTask = new Task();
                     String initialText = "";
                     if (data.containsKey("task_text")) {
                         initialText = data.getString("task_text");
                     }
-                    mTaskItem.setTaskText(initialText);
+                    mTask.setTaskText(initialText);
                     UpdateTaskText();
                     break;
                 }
 
                 case REQUEST_CODE_EDIT_MODE: {
-                    mTaskItem = data.getParcelable("DATA");
+                    mTask = data.getParcelable("DATA");
                     UpdateTaskText();
                     break;
                 }
             }
         }
 
+        updateTags(mTask.getTaskText());
+
         mTaskCompleted = (CheckBox) findViewById(R.id.taskCompleted);
-        mTaskCompleted.setChecked(mTaskItem.isCompleted());
+        mTaskCompleted.setChecked(mTask.isCompleted());
 
         taskText.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
-                mTaskItem.setTaskText(s.toString());
+                mTask.setTaskText(s.toString());
+                updateTags(s.toString());
             }
 
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -135,8 +141,45 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         mLocationSelector = ((TextView) findViewById(R.id.reminder_select_location));
 
         // update reminder controls
-        if (null != mTaskItem.getReminder()) {
+        if (null != mTask.getReminder()) {
             toggleReminder(null, true);
+        }
+    }
+
+    private void updateTags(String s) {
+        // add tags
+        ArrayList<String> tags = mTask.getTags();
+        if (!tags.isEmpty()) {
+            LinearLayout tagContainer = ((LinearLayout) findViewById(R.id.task_tags_container));
+            LayoutInflater inflater = getLayoutInflater();
+
+            for (int i = 0; i < tags.size(); i++) {
+                if (mDisplayedTags.contains(tags.get(i))) {
+                    continue;
+                }
+                TextView tagView = ((TextView) inflater.inflate(R.layout.tag_view, null, false));
+                tagView.setVisibility(View.VISIBLE);
+                tagView.setText(tags.get(i));
+                int index = tagContainer.getChildCount();
+                tagContainer.addView(tagView, index, tagContainer.getLayoutParams());
+                mDisplayedTags.add(tags.get(i));
+            }
+
+            mDisplayedTags = tags;
+            // remove excess tags
+            for (int i = tagContainer.getChildCount() - 1; i >= 0; i--) {
+                boolean found = false;
+                for (String tag : tags) {
+                    if (tagContainer.getChildAt(i).getClass() == TextView.class &&
+                            ((TextView) tagContainer.getChildAt(i)).getText().equals(tag)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (false == found) {
+                    tagContainer.removeViewAt(i);
+                }
+            }
         }
     }
 
@@ -164,11 +207,13 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     private void toggleReminder(View view, boolean animate) {
         LinearLayout layout = ((LinearLayout) findViewById(R.id.reminder_params_layout));
         if (layout.getVisibility() == View.VISIBLE) {
-            mTaskItem.setReminder(null);
+            ((TextView) findViewById(R.id.toggle_reminder)).setText(getString(R.string.add_reminder));
+            mTask.setReminder(null);
             UpdateTaskText();
             layout.setVisibility(View.GONE);
             return;
         } else {
+            ((TextView) findViewById(R.id.toggle_reminder)).setText(getString(R.string.remove_reminder));
             layout.setVisibility(View.VISIBLE);
             if (animate) {
                 Animation anima = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_in);
@@ -176,13 +221,13 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             }
         }
 
-        if (null == mTaskItem.getReminder() && mReminderParams != null) {
+        if (null == mTask.getReminder() && mReminderParams != null) {
             // reuse cached values
-            mTaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
-        } else if (mTaskItem.getReminder() != null) {
+            mTask.setReminder(new TaskReminder(mReminderType, mReminderParams));
+        } else if (mTask.getReminder() != null) {
             // get default values from task if any
-            mReminderParams = mTaskItem.getReminder().getParams();
-            mReminderType = mTaskItem.getReminder().getType();
+            mReminderParams = mTask.getReminder().getParams();
+            mReminderType = mTask.getReminder().getType();
         } else {
             // no reminder set defaults
             mReminderParams = new ReminderParams(new Date());
@@ -245,18 +290,18 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     private void ReturnData(int action) {
         Intent intent = new Intent();
-        intent.putExtra("DATA", mTaskItem);
+        intent.putExtra("DATA", mTask);
         intent.putExtra("ACTION", action);
         setResult(Activity.RESULT_OK, intent);
     }
 
     private void UpdateTaskText() {
-        taskText.setText(mTaskItem.getTaskPlainText());
+        taskText.setText(mTask.getTaskPlainText());
     }
 
     public void onTaskCompleted(View view) {
         Log.d(TAG, "onTaskCompleted");
-        mTaskItem.setCompleted(mTaskCompleted.isChecked());
+        mTask.setCompleted(mTaskCompleted.isChecked());
         UpdateTaskText();
     }
 
@@ -372,7 +417,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
             case R.id.action_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, mTaskItem.getTaskPlainText());
+                sendIntent.putExtra(Intent.EXTRA_TEXT, mTask.getTaskPlainText());
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
                 return true;
@@ -458,14 +503,26 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
                         break;
                     }
                     case R.id.action_select_pick_date:
-                        final DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(TaskView.this, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), false);
+                        calendar.setTime(mReminderParams.getTriggerDate());
+                        final DatePickerDialog datePickerDialog =
+                                DatePickerDialog.newInstance(TaskView.this,
+                                        calendar.get(Calendar.YEAR),
+                                        calendar.get(Calendar.MONTH),
+                                        calendar.get(Calendar.DAY_OF_MONTH),
+                                        false);
                         datePickerDialog.setVibrate(false);
                         datePickerDialog.setYearRange(2015, 2028);
                         datePickerDialog.setCloseOnSingleTapDay(false);
                         datePickerDialog.show(getSupportFragmentManager(), DATEPICKER_TAG);
                         break;
                     case R.id.action_select_pick_time:
-                        final TimePickerDialog timePickerDialog = TimePickerDialog.newInstance(TaskView.this, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false, false);
+                        calendar.setTime(mReminderParams.getTriggerDate());
+                        final TimePickerDialog timePickerDialog =
+                                TimePickerDialog.newInstance(TaskView.this,
+                                        calendar.get(Calendar.HOUR_OF_DAY),
+                                        calendar.get(Calendar.MINUTE),
+                                        android.text.format.DateFormat.is24HourFormat(TaskView.this),
+                                        false);
                         timePickerDialog.setVibrate(false);
                         timePickerDialog.setCloseOnSingleTapMinute(false);
                         timePickerDialog.show(getSupportFragmentManager(), TIMEPICKER_TAG);
@@ -540,7 +597,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
     public void onTimeSet(RadialPickerLayout view, int hourOfDay, int minute) {
         Calendar c = Calendar.getInstance();
         c.setTime(mReminderParams.getTriggerDate());
-        c.set(Calendar.HOUR, hourOfDay);
+        c.set(Calendar.HOUR_OF_DAY, hourOfDay);
         c.set(Calendar.MINUTE, minute);
         mReminderParams.setTriggerDate(c.getTime());
         mTimeSelector.setText(mReminderParams.getTriggerDateUFString(getApplicationContext(), DateUtils.FORMAT_SHOW_TIME));
@@ -548,7 +605,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     @Override
     public void OnUpdateReminderParams(ReminderParams params) {
-        mTaskItem.setReminder(new TaskReminder(mReminderType, mReminderParams));
+        mTask.setReminder(new TaskReminder(mReminderType, mReminderParams));
         UpdateTaskText();
     }
 }

@@ -44,17 +44,31 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/task_text"
+    <LinearLayout
+        android:id="@+id/task_text_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:fontFamily="sans-serif-light"
-        android:minHeight="48dp"
-        android:textAlignment="viewStart"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="20sp"
-        tools:ignore="UnusedAttribute" />
+        android:layout_gravity="top"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/task_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:fontFamily="sans-serif-light"
+            android:textAlignment="viewStart"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="20sp"
+            tools:ignore="UnusedAttribute" />
+
+        <LinearLayout
+            android:id="@+id/task_tags_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:orientation="horizontal"></LinearLayout>
+    </LinearLayout>
 </LinearLayout><!--
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"

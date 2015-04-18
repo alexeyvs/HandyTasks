@@ -70,6 +70,9 @@ public class HTApplication extends Application implements ICloudFSStorage {
 
     @Override
     public ICloudFS getFS() {
+        if (null == m_CloudAPI) {
+            return null;
+        }
         return m_CloudAPI.getFS();
     }
 

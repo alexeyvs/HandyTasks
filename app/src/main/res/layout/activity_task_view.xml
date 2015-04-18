@@ -18,7 +18,17 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:autoText="false"
-        android:inputType="textMultiLine" />
+        android:inputType="textMultiLine"
+        android:textSize="12pt" />
+
+    <LinearLayout
+        android:id="@+id/task_tags_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editText"
+        android:orientation="horizontal">
+
+    </LinearLayout>
 
     <CheckBox
         android:id="@+id/taskCompleted"
@@ -26,25 +36,45 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/editText"
+        android:layout_below="@+id/task_tags_container"
         android:onClick="onTaskCompleted"
         android:text="@string/task_completed_caption" />
 
+    <ImageView
+        android:id="@+id/reminder_separator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/taskCompleted"
+        android:src="@drawable/dotted" />
 
     <LinearLayout
         android:id="@+id/reminder_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/taskCompleted"
-        android:orientation="horizontal"
+        android:layout_below="@+id/reminder_separator"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
         android:visibility="visible">
 
-        <ImageButton
+        <!--
+                <ImageButton
+                    android:id="@+id/toggle_reminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="onToggleReminder"
+                    android:src="@drawable/ic_reminder" />
+        -->
+        <TextView
             android:id="@+id/toggle_reminder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:editable="false"
+            android:enabled="true"
+            android:inputType="text"
             android:onClick="onToggleReminder"
-            android:src="@drawable/ic_reminder" />
+            android:text="@string/add_reminder"
+            android:textSize="11pt" />
 
         <LinearLayout
             android:id="@+id/reminder_params_layout"
@@ -70,14 +100,9 @@
                     android:inputType="text"
                     android:onClick="onSelectReminderType"
                     android:text="Timed"
-                    android:textSize="10pt" />
+                    android:textSize="11pt" />
 
             </LinearLayout>
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/dotted" />
 
             <LinearLayout
                 android:id="@+id/timed_params"
@@ -95,9 +120,9 @@
                     android:enabled="true"
                     android:inputType="textMultiLine"
                     android:onClick="onSelectDateClick"
-                    android:paddingRight="10pt"
-                    android:text="Today"
-                    android:textSize="10pt" />
+                    android:paddingRight="5pt"
+                    android:text="@string/today_underline"
+                    android:textSize="11pt" />
 
                 <TextView
                     android:id="@+id/reminder_timed_time"
@@ -107,8 +132,8 @@
                     android:enabled="true"
                     android:inputType="textMultiLine"
                     android:onClick="onSelectTimeClick"
-                    android:text="Morning"
-                    android:textSize="10pt" />
+                    android:text="@string/morning_underline"
+                    android:textSize="11pt" />
 
             </LinearLayout>
 
@@ -129,7 +154,7 @@
                     android:inputType="textMultiLine"
                     android:onClick="onPickLocation"
                     android:text="Pick location"
-                    android:textSize="10pt" />
+                    android:textSize="11pt" />
 
             </LinearLayout>
 

@@ -86,5 +86,9 @@
     <string name="pick_time">Pick time...</string>
     <string name="done">Done</string>
     <string name="dismiss">Dismiss</string>
+    <string name="add_reminder"><u>Add reminder</u></string>
+    <string name="remove_reminder"><u>Remove reminder</u></string>
+    <string name="today_underline"><u>Today</u></string>
+    <string name="morning_underline"><u>Morning</u></string>
 
 </resources>
