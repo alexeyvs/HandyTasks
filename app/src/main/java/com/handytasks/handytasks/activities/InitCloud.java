@@ -37,12 +37,14 @@ public class InitCloud extends BaseActivity {
         setContentView(R.layout.activity_init_cloud);
 
         // set checkbox state
-        SharedPreferences prefs = getSharedPreferences(
-                "com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
-        if (prefs.getString("cloud_type", "").equals("Dropbox")) {
-            ((RadioButton) findViewById(R.id.radio_dropbox)).setChecked(true);
-        } else {
-            ((RadioButton) findViewById(R.id.radio_google_drive)).setChecked(true);
+        if (((HTApplication) getApplication()).getCloudAPI() != null) {
+            SharedPreferences prefs = getSharedPreferences(
+                    "com.handytasks.handytasks", Context.MODE_MULTI_PROCESS);
+            if (prefs.getString("cloud_type", "").equals("Dropbox")) {
+                ((RadioButton) findViewById(R.id.radio_dropbox)).setChecked(true);
+            } else {
+                ((RadioButton) findViewById(R.id.radio_google_drive)).setChecked(true);
+            }
         }
     }
 

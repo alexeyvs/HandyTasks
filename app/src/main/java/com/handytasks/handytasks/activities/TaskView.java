@@ -2,9 +2,7 @@ package com.handytasks.handytasks.activities;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -77,13 +75,7 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String theme = prefs.getString("theme", "HandyTasksTheme");
-        if (theme.equals("HandyTasksTheme")) {
-            setTheme(R.style.HandyTasksTheme);
-        } else if (theme.equals("HandyTasksThemeDark")) {
-            setTheme(R.style.HandyTasksThemeDark);
-        }
+        BaseActivity.setTheme(this);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_view);
@@ -144,6 +136,12 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         if (null != mTask.getReminder()) {
             toggleReminder(null, true);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        BaseActivity.sendScreenView(this);
     }
 
     private void updateTags(String s) {

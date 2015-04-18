@@ -94,6 +94,7 @@
     <orderEntry type="library" exported="" name="acra-4.6.1" level="project" />
     <orderEntry type="library" exported="" name="library-2.4.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-drive-7.0.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-analytics-7.0.0" level="project" />
     <orderEntry type="module" module-name="lib-core-slh" exported="" />
     <orderEntry type="module" module-name="lib-manipulation" exported="" />
     <orderEntry type="module" module-name="datetimepicker-library" exported="" />
