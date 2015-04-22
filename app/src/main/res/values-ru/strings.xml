@@ -73,7 +73,7 @@
     <string name="search">Поиск</string>
     <string name="text_az">По тексту А-Я</string>
     <string name="text_za">По тексту Я-А</string>
-    <string name="on_location">Рядом с определенным местом</string>
+    <string name="on_location">В определенном месте</string>
     <string name="on_time">В определенное время</string>
     <string name="pick_date">Выбрать дату...</string>
     <string name="pick_time">Выбрать время...</string>
