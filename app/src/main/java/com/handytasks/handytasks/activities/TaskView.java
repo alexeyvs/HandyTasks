@@ -570,18 +570,6 @@ public class TaskView extends FragmentActivity implements DatePickerDialog.OnDat
         // view.showContextMenu();
     }
 
-// --Commented out by Inspection START (4/15/2015 11:24 PM):
-//    public void setTimedReminder(View view) {
-//        final Calendar calendar = Calendar.getInstance();
-//        final DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(this, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), true);
-//        datePickerDialog.setVibrate(true);
-//        datePickerDialog.setYearRange(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR) + 10);
-//        datePickerDialog.setCloseOnSingleTapDay(true);
-//        datePickerDialog.show(getSupportFragmentManager(), DATEPICKER_TAG);
-//
-//    }
-// --Commented out by Inspection STOP (4/15/2015 11:24 PM)
-
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int year, int month, int day) {
         Calendar c = Calendar.getInstance();

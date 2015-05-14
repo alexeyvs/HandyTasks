@@ -201,7 +201,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
     }
 
     private void processSchedules(final Tasks tasks) {
-        synchronized (tasks) {
+        synchronized (mSchedules) {
             // check absent scheduled tasks
             Enumeration<Task> enumKey = mSchedules.keys();
             while (enumKey.hasMoreElements()) {
@@ -275,6 +275,21 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         mService.sendMessageToUI(1);
     }
 
+    private ICreateTasksResult mCreateTasksResult = new ICreateTasksResult() {
+        @Override
+        public void OnSuccess(final Tasks result, int title) {
+            synchronized (result) {
+                processSchedules(result);
+                result.addChangedEventHandler(mTaskListChangedHandler);
+            }
+        }
+
+        @Override
+        public void OnFailure(String result) {
+            Log.e(TAG, "GetTasks error: " + result);
+        }
+    };
+
     @Override
     public void run() {
         int i = 0;
@@ -288,7 +303,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
         while (!mStopSignal) {
 
             try {
-                Thread.sleep(5000, 0);
+                Thread.sleep(10000, 0);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -301,29 +316,21 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
             }
 
             if (((HTApplication) mService.getApplication()).isAPIInitialized()) {
-                ///sendNotification("API status", "ready");
 
-                ((HTApplication) mService.getApplication()).getTaskTypes().getTasks(false, TaskTypes.TaskListTypes.MainList, new ICreateTasksResult() {
-                    @Override
-                    public void OnSuccess(final Tasks result, int title) {
-                        synchronized (result) {
-                            processSchedules(result);
-                            result.addChangedEventHandler(mTaskListChangedHandler);
-                        }
-                    }
+                TaskTypes taskTypes = ((HTApplication) mService.getApplication()).getTaskTypes();
 
-                    @Override
-                    public void OnFailure(String result) {
-
-                    }
-                });
+                try {
+                    taskTypes.getTasks(false, TaskTypes.TaskListTypes.MainList, mCreateTasksResult);
+                } catch (Exception ex) {
+                    Log.e(TAG, ex.getMessage());
+                    ex.printStackTrace();
+                }
             } else {
 
                 ((HTApplication) mService.getApplication()).generateAPI(mService, mService.getApplicationContext(), new IInitAPI() {
                     @Override
                     public void OnSuccess(ICloudAPI result) {
                         ((HTApplication) mService.getApplication()).setAPI(result);
-                        // sendNotification(NotificationType.System, "API status", "now ready", null);
                     }
 
                     @Override
@@ -333,6 +340,7 @@ public class HTServiceWorker implements Runnable, GoogleApiClient.ConnectionCall
 
                     @Override
                     public void OnFailure(Object result) {
+                        Log.e(TAG, "Generate API error: " + result.toString());
                         //sendNotification(NotificationType.System, "API status", "error: " + result.toString(), null);
                     }
                 }, false);

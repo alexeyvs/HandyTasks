@@ -35,6 +35,8 @@
 
 -dontwarn com.dropbox.**
 -keep class com.dropbox.** {*;}
+-keep class com.handytasks.** {*;}
+
 
 -optimizationpasses 5
 -dontusemixedcaseclassnames
